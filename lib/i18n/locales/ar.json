@@ -734,5 +734,56 @@
       "widen": "أرسل طلبًا جديدًا أوسع",
       "bookDirectly": "احجز مركزًا مباشرة"
     }
+  },
+  "payments": {
+    "pay": "ادفع",
+    "payNow": "ادفع الآن",
+    "total": "الإجمالي",
+    "method": {
+      "knet": "كي نت",
+      "card": "بطاقة",
+      "applePay": "Apple Pay",
+      "googlePay": "Google Pay",
+      "wallet": "المحفظة"
+    },
+    "useWallet": "استخدم رصيد المحفظة",
+    "remainder": "المتبقي للدفع",
+    "saveCard": "احفظ هذه البطاقة للمرة القادمة",
+    "status": {
+      "pending": "بانتظار الدفع",
+      "held": "محجوز (ضمان)",
+      "released": "تم الإفراج",
+      "paid": "مدفوع",
+      "refunded": "مسترد",
+      "failed": "فشل الدفع"
+    },
+    "release": "تأكيد والإفراج",
+    "releaseHint": "متاح بعد أن يحدد المركز اكتمال العمل",
+    "reportProblem": "الإبلاغ عن مشكلة",
+    "autoRelease": "إفراج تلقائي في {{date}}",
+    "result": {
+      "securedTitle": "تم تأمين الدفعة",
+      "securedBody": "محجوزة بأمان حتى تؤكد اكتمال العمل.",
+      "failedTitle": "لم تكتمل الدفعة",
+      "processing": "ما زالت قيد المعالجة — سنخطرك",
+      "retry": "إعادة المحاولة"
+    },
+    "receipt": "عرض الإيصال",
+    "mismatch": "عدم تطابق المبلغ — يرجى التحديث"
+  },
+  "wallet": {
+    "title": "المحفظة",
+    "balance": "الرصيد",
+    "topUp": "شحن",
+    "amount": "المبلغ",
+    "tx": {
+      "topup": "شحن",
+      "payment": "دفعة",
+      "refund": "استرداد",
+      "loyalty": "رصيد ولاء"
+    },
+    "savedMethods": "البطاقات المحفوظة",
+    "remove": "إزالة",
+    "empty": "لا توجد معاملات بعد"
   }
 }

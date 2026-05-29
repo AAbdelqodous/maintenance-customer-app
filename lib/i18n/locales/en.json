@@ -734,5 +734,56 @@
       "widen": "Send a new, wider request",
       "bookDirectly": "Book a center directly"
     }
+  },
+  "payments": {
+    "pay": "Pay",
+    "payNow": "Pay Now",
+    "total": "Total",
+    "method": {
+      "knet": "KNET",
+      "card": "Card",
+      "applePay": "Apple Pay",
+      "googlePay": "Google Pay",
+      "wallet": "Wallet"
+    },
+    "useWallet": "Use wallet balance",
+    "remainder": "Remaining to pay",
+    "saveCard": "Save this card for next time",
+    "status": {
+      "pending": "Awaiting payment",
+      "held": "Secured (in escrow)",
+      "released": "Released",
+      "paid": "Paid",
+      "refunded": "Refunded",
+      "failed": "Payment failed"
+    },
+    "release": "Confirm & Release",
+    "releaseHint": "Available once the center marks the work complete",
+    "reportProblem": "Report a problem",
+    "autoRelease": "Auto-releases on {{date}}",
+    "result": {
+      "securedTitle": "Payment secured",
+      "securedBody": "Held safely until you confirm the work is done.",
+      "failedTitle": "Payment not completed",
+      "processing": "Still processing — we'll notify you",
+      "retry": "Try Again"
+    },
+    "receipt": "View receipt",
+    "mismatch": "Amount mismatch — please refresh"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Balance",
+    "topUp": "Top Up",
+    "amount": "Amount",
+    "tx": {
+      "topup": "Top-up",
+      "payment": "Payment",
+      "refund": "Refund",
+      "loyalty": "Loyalty credit"
+    },
+    "savedMethods": "Saved cards",
+    "remove": "Remove",
+    "empty": "No transactions yet"
   }
 }

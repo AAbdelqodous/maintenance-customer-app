@@ -297,6 +297,17 @@ export default function ProfileScreen() {
         <View style={styles.sectionContent}>
           <TouchableOpacity
             style={styles.menuItem}
+            onPress={() => router.push('/(app)/wallet')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="wallet-outline" size={20} color="#2196F3" />
+              <AppText style={styles.menuText}>{t('wallet.title')}</AppText>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#9E9E9E" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
             onPress={() => router.push('/(app)/(tabs)/profile/loyalty')}
           >
             <View style={styles.menuLeft}>

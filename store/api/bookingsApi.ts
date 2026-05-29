@@ -73,6 +73,8 @@ export interface Booking {
   bookingStatus: BookingStatus;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** Spec 007 — amount captured in-app (KD), when paid via the payments flow. */
+  paidAmount?: number;
   estimatedCost?: number;
   finalCost?: number;
   specialInstructions?: string;

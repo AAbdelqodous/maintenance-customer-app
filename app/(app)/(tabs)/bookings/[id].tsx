@@ -11,6 +11,14 @@ import { BookingStatus, PaymentMethod, getBookingServiceLabel, useCancelBookingM
 import { useCreateConversationMutation } from '../../../../store/api/chatApi';
 import { useGetCustomerMediaQuery, useUploadCustomerMediaMutation } from '../../../../store/api/mediaApi';
 import { useGetBookingQuoteQuery } from '../../../../store/api/quoteApi';
+import {
+  PaymentStatus,
+  useGetBookingInvoiceQuery,
+  useRaiseProblemMutation,
+  useReleaseEscrowMutation,
+} from '../../../../store/api/paymentsApi';
+import { PaymentStatusBadge } from '../../../../components/payments/PaymentStatusBadge';
+import { formatKD } from '../../../../lib/money';
 
 export default function BookingDetailScreen() {
   const { t, i18n } = useTranslation();
@@ -23,6 +31,9 @@ export default function BookingDetailScreen() {
   const { data: quote, refetch: refetchQuote } = useGetBookingQuoteQuery(bookingId, {
     skip: booking?.bookingStatus !== BookingStatus.QUOTE_READY,
   });
+  const { data: invoice, refetch: refetchInvoice } = useGetBookingInvoiceQuery(bookingId, { skip: !bookingId });
+  const [releaseEscrow] = useReleaseEscrowMutation();
+  const [raiseProblem] = useRaiseProblemMutation();
   const [cancelBooking] = useCancelBookingMutation();
   const [createConversation] = useCreateConversationMutation();
   const [uploadCustomerMedia, { isLoading: isUploading }] = useUploadCustomerMediaMutation();
@@ -311,6 +322,72 @@ export default function BookingDetailScreen() {
           </View>
         )}
 
+        {/* Payment (spec 007 — escrow lifecycle) */}
+        {invoice && (
+          <View style={styles.section}>
+            <View style={styles.payHeaderRow}>
+              <AppText style={styles.sectionTitle}>{t('payments.total')}</AppText>
+              {invoice.paymentStatus !== PaymentStatus.PENDING && (
+                <PaymentStatusBadge status={invoice.paymentStatus} />
+              )}
+            </View>
+
+            {invoice.paymentStatus === PaymentStatus.PENDING && (
+              <AppButton
+                title={`${t('payments.pay')} · ${formatKD(invoice.total, isRTL ? 'ar' : 'en')}`}
+                onPress={() =>
+                  router.push({ pathname: '/(app)/(tabs)/bookings/pay', params: { bookingId: String(bookingId) } })
+                }
+              />
+            )}
+
+            {invoice.paymentStatus === PaymentStatus.HELD && (
+              <View style={styles.payActions}>
+                <AppButton
+                  title={t('payments.release')}
+                  disabled={!invoice.releaseEligible}
+                  onPress={async () => {
+                    try { await releaseEscrow(bookingId).unwrap(); refetchInvoice(); } catch { /* keep state */ }
+                  }}
+                />
+                {!invoice.releaseEligible && (
+                  <AppText style={styles.payHint}>{t('payments.releaseHint')}</AppText>
+                )}
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert(t('payments.reportProblem'), undefined, [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('payments.reportProblem'),
+                        style: 'destructive',
+                        onPress: () => raiseProblem({ bookingId, reason: 'Reported from booking detail' }),
+                      },
+                    ])
+                  }
+                >
+                  <AppText style={styles.reportText}>{t('payments.reportProblem')}</AppText>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {(invoice.paymentStatus === PaymentStatus.RELEASED || invoice.paymentStatus === PaymentStatus.PAID) &&
+              !!invoice.receiptUrl && (
+                <TouchableOpacity onPress={() => router.push('/(app)/(tabs)/bookings/[id]')}>
+                  <AppText style={styles.receiptText}>{t('payments.receipt')}</AppText>
+                </TouchableOpacity>
+              )}
+
+            {invoice.paymentStatus === PaymentStatus.FAILED && (
+              <AppButton
+                title={t('payments.result.retry')}
+                onPress={() =>
+                  router.push({ pathname: '/(app)/(tabs)/bookings/pay', params: { bookingId: String(bookingId) } })
+                }
+              />
+            )}
+          </View>
+        )}
+
         {/* Cancellation Info */}
         {booking.cancelledReason && (
           <View style={styles.section}>
@@ -494,6 +571,11 @@ const styles = StyleSheet.create({
     color: '#1A1A2E',
     marginBottom: 12,
   },
+  payHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  payActions: { gap: 10 },
+  payHint: { fontSize: 13, color: '#757575', textAlign: 'center' },
+  reportText: { color: '#E53935', fontWeight: '600', textAlign: 'center', paddingVertical: 8 },
+  receiptText: { color: '#2196F3', fontWeight: '600', paddingVertical: 8 },
   centerCard: {
     flexDirection: 'row',
     alignItems: 'center',

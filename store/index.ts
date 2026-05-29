@@ -19,6 +19,8 @@ import { vehiclesApi } from './api/vehiclesApi';
 import { remindersApi } from './api/remindersApi';
 import { referralApi } from './api/referralApi';
 import { quoteRequestsApi } from './api/quoteRequestsApi';
+import { paymentsApi } from './api/paymentsApi';
+import { walletApi } from './api/walletApi';
 import authReducer, { clearSession } from './authSlice';
 import bookingsReducer from './bookingsSlice';
 import centersReducer from './centersSlice';
@@ -61,6 +63,8 @@ export const store = configureStore({
     [remindersApi.reducerPath]: remindersApi.reducer,
     [referralApi.reducerPath]: referralApi.reducer,
     [quoteRequestsApi.reducerPath]: quoteRequestsApi.reducer,
+    [paymentsApi.reducerPath]: paymentsApi.reducer,
+    [walletApi.reducerPath]: walletApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -83,6 +87,8 @@ export const store = configureStore({
       remindersApi.middleware,
       referralApi.middleware,
       quoteRequestsApi.middleware,
+      paymentsApi.middleware,
+      walletApi.middleware,
     ),
 });
 
