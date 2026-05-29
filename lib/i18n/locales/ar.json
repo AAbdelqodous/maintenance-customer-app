@@ -715,7 +715,9 @@
       "accept": "قبول",
       "accepting": "جاري الحجز…",
       "cancel": "إلغاء الطلب",
-      "ask": "اطرح سؤالاً"
+      "ask": "اطرح سؤالاً",
+      "viewBooking": "عرض الحجز",
+      "cancelledBanner": "لقد ألغيت هذا الطلب"
     },
     "response": {
       "from": "من",

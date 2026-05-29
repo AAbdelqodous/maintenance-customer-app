@@ -20,6 +20,7 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="search" />
+      <Stack.Screen name="quote-requests" />
       <Stack.Screen name="complaints" options={{ headerShown: true }} />
       <Stack.Screen name="settings/language" options={{ headerShown: true }} />
       <Stack.Screen name="settings/notifications" options={{ headerShown: true }} />

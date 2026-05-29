@@ -715,7 +715,9 @@
       "accept": "Accept",
       "accepting": "Booking…",
       "cancel": "Cancel request",
-      "ask": "Ask a question"
+      "ask": "Ask a question",
+      "viewBooking": "View your booking",
+      "cancelledBanner": "You cancelled this request"
     },
     "response": {
       "from": "From",
