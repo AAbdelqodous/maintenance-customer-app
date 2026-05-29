@@ -10,11 +10,12 @@ import { AppText } from '../../../../components/ui/AppText';
 // it routes to payment-result, which reconciles status from the backend (R3). Mock mode renders a
 // simulated gateway so the flow is demoable without a real gateway server.
 export default function PaymentWebViewScreen() {
-  const { url, returnUrlPrefix, paymentId, bookingId } = useLocalSearchParams<{
+  const { url, returnUrlPrefix, paymentId, bookingId, returnTo } = useLocalSearchParams<{
     url: string;
     returnUrlPrefix: string;
     paymentId: string;
     bookingId: string;
+    returnTo?: string;
   }>();
   const router = useRouter();
   const { t } = useTranslation();
@@ -23,7 +24,7 @@ export default function PaymentWebViewScreen() {
   const goResult = () =>
     router.replace({
       pathname: '/(app)/(tabs)/bookings/payment-result',
-      params: { paymentId, bookingId },
+      params: { paymentId, bookingId, ...(returnTo ? { returnTo } : {}) },
     });
 
   // Web (non-mock): open the hosted page in the system browser, then reconcile on return.

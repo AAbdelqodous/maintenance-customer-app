@@ -25,6 +25,7 @@ export default function AppLayout() {
       <Stack.Screen name="complaints" options={{ headerShown: true }} />
       <Stack.Screen name="settings/language" options={{ headerShown: true }} />
       <Stack.Screen name="settings/notifications" options={{ headerShown: true }} />
+      <Stack.Screen name="settings/payment-methods" options={{ headerShown: true }} />
       <Stack.Screen name="help" options={{ headerShown: true }} />
       <Stack.Screen name="about" options={{ headerShown: true }} />
       <Stack.Screen name="privacy" options={{ headerShown: true }} />

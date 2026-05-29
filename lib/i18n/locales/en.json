@@ -784,6 +784,7 @@
     },
     "savedMethods": "Saved cards",
     "remove": "Remove",
-    "empty": "No transactions yet"
+    "empty": "No transactions yet",
+    "topUpComplete": "Top-up complete"
   }
 }

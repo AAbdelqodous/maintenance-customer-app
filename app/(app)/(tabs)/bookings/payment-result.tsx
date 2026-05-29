@@ -9,6 +9,7 @@ import {
   paymentsApi,
   useLazyGetPaymentStatusQuery,
 } from '../../../../store/api/paymentsApi';
+import { walletApi } from '../../../../store/api/walletApi';
 import { useAppDispatch } from '../../../../store';
 
 const POLL_MS = 2000;
@@ -24,10 +25,11 @@ const TERMINAL = [
 // Spec 007 US1 — reconcile payment status from the backend (authoritative). The WebView outcome
 // is ignored here; only the polled status decides success/failure (R3, prevents double-charge).
 export default function PaymentResultScreen() {
-  const { paymentId, bookingId } = useLocalSearchParams<{ paymentId: string; bookingId: string }>();
+  const { paymentId, bookingId, returnTo } = useLocalSearchParams<{ paymentId: string; bookingId: string; returnTo?: string }>();
   const router = useRouter();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
+  const isWallet = returnTo === 'wallet';
 
   const [fetchStatus] = useLazyGetPaymentStatusQuery();
   const [status, setStatus] = useState<PaymentStatus | null>(null);
@@ -46,8 +48,12 @@ export default function PaymentResultScreen() {
         if (cancelled) return;
         if (TERMINAL.includes(res.status)) {
           setStatus(res.status);
-          // Refresh the invoice + booking so the detail screen reflects the new state.
-          dispatch(paymentsApi.util.invalidateTags([{ type: 'Invoice', id: Number(bookingId) }]));
+          // Refresh the relevant caches so the originating screen reflects the new state.
+          if (isWallet) {
+            dispatch(walletApi.util.invalidateTags(['Wallet', 'WalletTx']));
+          } else {
+            dispatch(paymentsApi.util.invalidateTags([{ type: 'Invoice', id: Number(bookingId) }]));
+          }
           return;
         }
       } catch {
@@ -68,19 +74,21 @@ export default function PaymentResultScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId]);
 
-  const backToBooking = () =>
-    router.replace({ pathname: '/(app)/(tabs)/bookings/[id]', params: { id: bookingId } });
+  const backToOrigin = () =>
+    isWallet
+      ? router.replace('/(app)/wallet')
+      : router.replace({ pathname: '/(app)/(tabs)/bookings/[id]', params: { id: bookingId } });
 
   // Terminal renders
   if (status === PaymentStatus.HELD || status === PaymentStatus.PAID || status === PaymentStatus.RELEASED) {
     return (
       <Result
-        icon="shield-checkmark"
+        icon="checkmark-circle"
         color="#2E7D32"
-        title={t('payments.result.securedTitle')}
-        body={t('payments.result.securedBody')}
-        cta={t('payments.pay')}
-        onPress={backToBooking}
+        title={isWallet ? t('wallet.topUpComplete') : t('payments.result.securedTitle')}
+        body={isWallet ? undefined : t('payments.result.securedBody')}
+        cta={t('common.ok')}
+        onPress={backToOrigin}
       />
     );
   }
@@ -101,8 +109,8 @@ export default function PaymentResultScreen() {
         icon="time-outline"
         color="#E65100"
         title={t('payments.result.processing')}
-        cta={t('payments.pay')}
-        onPress={backToBooking}
+        cta={t('common.ok')}
+        onPress={backToOrigin}
       />
     );
   }

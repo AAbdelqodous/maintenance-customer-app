@@ -346,12 +346,27 @@ export default function BookingDetailScreen() {
                 <AppButton
                   title={t('payments.release')}
                   disabled={!invoice.releaseEligible}
-                  onPress={async () => {
-                    try { await releaseEscrow(bookingId).unwrap(); refetchInvoice(); } catch { /* keep state */ }
-                  }}
+                  onPress={() =>
+                    Alert.alert(t('payments.release'), t('payments.result.securedBody'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('payments.release'),
+                        onPress: async () => {
+                          try { await releaseEscrow(bookingId).unwrap(); refetchInvoice(); } catch { /* keep state */ }
+                        },
+                      },
+                    ])
+                  }
                 />
                 {!invoice.releaseEligible && (
                   <AppText style={styles.payHint}>{t('payments.releaseHint')}</AppText>
+                )}
+                {!!invoice.autoReleaseAt && invoice.releaseEligible && (
+                  <AppText style={styles.payHint}>
+                    {t('payments.autoRelease', {
+                      date: new Date(invoice.autoReleaseAt).toLocaleDateString(isRTL ? 'ar' : 'en'),
+                    })}
+                  </AppText>
                 )}
                 <TouchableOpacity
                   onPress={() =>

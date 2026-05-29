@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { WalletBalanceCard } from '../../../components/payments/WalletBalanceCard';
 import { AppText } from '../../../components/ui/AppText';
 import { formatKDSigned } from '../../../lib/money';
@@ -37,6 +37,15 @@ export default function WalletScreen() {
             balance={wallet?.balance ?? 0}
             onTopUp={() => router.push('/(app)/wallet/topup')}
           />
+          <TouchableOpacity
+            style={styles.savedRow}
+            onPress={() => router.push('/(app)/settings/payment-methods')}
+            accessibilityRole="button"
+          >
+            <Ionicons name="card-outline" size={20} color="#2196F3" />
+            <AppText style={styles.savedText}>{t('wallet.savedMethods')}</AppText>
+            <Ionicons name="chevron-forward" size={18} color="#9E9E9E" />
+          </TouchableOpacity>
           {!!(transactions && transactions.length) && (
             <AppText style={styles.txTitle}>{t('wallet.title')}</AppText>
           )}
@@ -76,6 +85,17 @@ const styles = StyleSheet.create({
   content: { padding: 16 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerWrap: { marginBottom: 8 },
+  savedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginTop: 12,
+  },
+  savedText: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1A1A2E' },
   txTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A2E', marginTop: 20, marginBottom: 4 },
   txRow: {
     flexDirection: 'row',
