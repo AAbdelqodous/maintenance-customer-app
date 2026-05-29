@@ -16,6 +16,7 @@ export interface Address {
 
 export interface ServiceCategory {
   id: number;
+  code?: string;
   nameAr: string;
   nameEn: string;
   descriptionAr?: string;

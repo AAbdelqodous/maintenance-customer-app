@@ -15,18 +15,21 @@ import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
 import {
     PaymentMethod,
-    ServiceType,
 } from '../../../../store/api/bookingsApi';
+import {
+    CenterServiceResponse,
+    useGetServicesForCenterCategoryQuery,
+} from '../../../../store/api/centerServicesApi';
 import { useGetCenterByIdQuery } from '../../../../store/api/centersApi';
 
 export default function NewBookingScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { centerId } = useLocalSearchParams<{ centerId: string }>();
+  const { centerId, categoryId } = useLocalSearchParams<{ centerId: string; categoryId: string }>();
   const isRTL = i18n.dir() === 'rtl';
 
   const [step, setStep] = useState(0); // 0, 1, 2
-  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType | null>(null);
+  const [selectedService, setSelectedService] = useState<CenterServiceResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>(PaymentMethod.CASH);
@@ -37,6 +40,16 @@ export default function NewBookingScreen() {
   const { data: center, isLoading: centerLoading } = useGetCenterByIdQuery(
     Number(centerId),
     { skip: !centerId }
+  );
+
+  const {
+    data: servicesData,
+    isLoading: servicesLoading,
+    isError: servicesError,
+    refetch: refetchServices,
+  } = useGetServicesForCenterCategoryQuery(
+    { centerId: Number(centerId), categoryId: Number(categoryId) },
+    { skip: !centerId || !categoryId }
   );
 
   // Generate next 7 days
@@ -68,14 +81,6 @@ export default function NewBookingScreen() {
     return slots;
   };
 
-  const serviceTypes = [
-    { value: ServiceType.CAR, label: t('booking.serviceType.car'), icon: '🚗' },
-    { value: ServiceType.ELECTRONICS, label: t('booking.serviceType.electronics'), icon: '📱' },
-    { value: ServiceType.HOME_APPLIANCE, label: t('booking.serviceType.home_appliance'), icon: '🏠' },
-    { value: ServiceType.EMERGENCY, label: t('booking.serviceType.emergency'), icon: '🚨' },
-    { value: ServiceType.INSTALLATION, label: t('booking.serviceType.installation'), icon: '🔩' },
-    { value: ServiceType.REPAIR, label: t('booking.serviceType.repair'), icon: '🔧' },
-  ];
 
   const paymentMethods = [
     { value: PaymentMethod.CASH, label: t('booking.paymentMethod.cash'), icon: '💵' },
@@ -84,7 +89,7 @@ export default function NewBookingScreen() {
   ];
 
   const handleNextStep = () => {
-    if (step === 0 && !selectedServiceType) {
+    if (step === 0 && !selectedService) {
       Alert.alert(t('common.error'), t('booking.selectService'));
       return;
     }
@@ -96,7 +101,7 @@ export default function NewBookingScreen() {
   };
 
   const handleConfirm = () => {
-    if (!selectedServiceType || !selectedDate || !selectedTime || !centerId) {
+    if (!selectedService || !selectedDate || !selectedTime || !centerId) {
       Alert.alert(t('common.error'), t('common.retry'));
       return;
     }
@@ -108,9 +113,14 @@ export default function NewBookingScreen() {
       pathname: '/(app)/(tabs)/bookings/confirmation',
       params: {
         centerId: String(centerId),
-        serviceType: selectedServiceType,
+        categoryId: String(selectedService.category.id),
+        serviceId: String(selectedService.id),
+        categoryNameEn: selectedService.category.nameEn,
+        categoryNameAr: selectedService.category.nameAr,
+        serviceNameEn: selectedService.service.nameEn,
+        serviceNameAr: selectedService.service.nameAr,
         bookingDate: selectedDate,
-        bookingTime: selectedTime,
+        bookingTime: `${selectedTime}:00`,
         paymentMethod: selectedPayment,
         customerPhone: customerPhone.trim(),
         serviceDescription: description || '',
@@ -179,37 +189,60 @@ export default function NewBookingScreen() {
           <AppText style={styles.centerName}>{centerName}</AppText>
         ) : null}
 
-        {/* Step 0: Select Service Type */}
+        {/* Step 0: Select Service */}
         {step === 0 && (
           <View>
-            <AppText style={styles.stepTitle}>{t('booking.selectService')}</AppText>
-            {serviceTypes.map((service) => (
-              <TouchableOpacity
-                key={service.value}
-                style={[
-                  styles.serviceCard,
-                  selectedServiceType === service.value && styles.serviceCardSelected,
-                ]}
-                onPress={() => setSelectedServiceType(service.value)}
-              >
-                <AppText style={styles.serviceIcon}>{service.icon}</AppText>
-                <AppText style={styles.serviceLabel}>{service.label}</AppText>
-                {selectedServiceType === service.value && (
-                  <Ionicons name="checkmark-circle" size={24} color="#2196F3" />
-                )}
-              </TouchableOpacity>
-            ))}
-            <View style={styles.inputGroup}>
-              <AppText style={styles.inputLabel}>{t('booking.description')}</AppText>
-              <TextInput
-                style={styles.textInput}
-                value={description}
-                onChangeText={setDescription}
-                placeholder={t('booking.descriptionPlaceholder')}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
+            {servicesLoading ? (
+              <View style={styles.noServicesContainer}>
+                <ActivityIndicator size="large" color="#2196F3" />
+              </View>
+            ) : servicesError ? (
+              <View style={styles.noServicesContainer}>
+                <Ionicons name="alert-circle-outline" size={56} color="#F44336" />
+                <AppText style={styles.noServicesTitle}>{t('booking.categorySelect.error')}</AppText>
+                <TouchableOpacity style={styles.retryButton} onPress={() => refetchServices()}>
+                  <AppText style={styles.retryButtonText}>{t('booking.categorySelect.retry')}</AppText>
+                </TouchableOpacity>
+              </View>
+            ) : !servicesData || servicesData.length === 0 ? (
+              <View style={styles.noServicesContainer}>
+                <Ionicons name="construct-outline" size={64} color="#BDBDBD" />
+                <AppText style={styles.noServicesTitle}>{t('booking.noServicesTitle')}</AppText>
+                <AppText style={styles.noServicesMessage}>{t('booking.categorySelect.empty')}</AppText>
+              </View>
+            ) : (
+              <View>
+                <AppText style={styles.stepTitle}>{t('booking.selectService')}</AppText>
+                {servicesData.map((cs) => (
+                  <TouchableOpacity
+                    key={cs.id}
+                    style={[
+                      styles.serviceCard,
+                      selectedService?.id === cs.id && styles.serviceCardSelected,
+                    ]}
+                    onPress={() => setSelectedService(cs)}
+                  >
+                    <AppText style={styles.serviceLabel}>
+                      {isRTL ? cs.service.nameAr : cs.service.nameEn}
+                    </AppText>
+                    {selectedService?.id === cs.id && (
+                      <Ionicons name="checkmark-circle" size={24} color="#2196F3" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+                <View style={styles.inputGroup}>
+                  <AppText style={styles.inputLabel}>{t('booking.description')}</AppText>
+                  <TextInput
+                    style={styles.textInput}
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder={t('booking.descriptionPlaceholder')}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -260,9 +293,9 @@ export default function NewBookingScreen() {
                 <AppText style={styles.summaryValue}>{centerName}</AppText>
               </View>
               <View style={styles.summaryRow}>
-                <AppText style={styles.summaryLabel}>{t('booking.serviceTypeLabel')}</AppText>
+                <AppText style={styles.summaryLabel}>{t('booking.serviceLabel')}</AppText>
                 <AppText style={styles.summaryValue}>
-                  {serviceTypes.find(s => s.value === selectedServiceType)?.label}
+                  {selectedService ? (isRTL ? selectedService.service.nameAr : selectedService.service.nameEn) : ''}
                 </AppText>
               </View>
               <View style={styles.summaryRow}>
@@ -325,21 +358,23 @@ export default function NewBookingScreen() {
       </ScrollView>
 
       {/* Bottom button */}
-      <View style={styles.bottomBar}>
-        {step < 2 ? (
-          <AppButton
-            title={t('common.next')}
-            onPress={handleNextStep}
-            style={styles.nextButton}
-          />
-        ) : (
-          <AppButton
-            title={t('booking.confirm')}
-            onPress={handleConfirm}
-            style={styles.nextButton}
-          />
-        )}
-      </View>
+      {(step > 0 || (servicesData && servicesData.length > 0)) && (
+        <View style={styles.bottomBar}>
+          {step < 2 ? (
+            <AppButton
+              title={t('common.next')}
+              onPress={handleNextStep}
+              style={styles.nextButton}
+            />
+          ) : (
+            <AppButton
+              title={t('booking.confirm')}
+              onPress={handleConfirm}
+              style={styles.nextButton}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -416,4 +451,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#E0E0E0',
   },
   nextButton: { width: '100%' },
+  noServicesContainer: {
+    alignItems: 'center', paddingTop: 32, paddingHorizontal: 8,
+  },
+  noServicesTitle: {
+    fontSize: 18, fontWeight: '700', color: '#1A1A2E',
+    marginTop: 16, textAlign: 'center',
+  },
+  noServicesMessage: {
+    fontSize: 14, color: '#757575', textAlign: 'center',
+    marginTop: 8, lineHeight: 20,
+  },
+  retryButton: {
+    marginTop: 16, backgroundColor: '#2196F3',
+    paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8,
+  },
+  retryButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 });

@@ -15,7 +15,13 @@ import { setJwt } from '../../lib/secureStorage';
 export default function OtpVerifyScreen() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { email, password } = useLocalSearchParams<{ email: string; password?: string }>();
+  const { email, password, mode } = useLocalSearchParams<{
+    email: string;
+    password?: string;
+    mode?: string;
+  }>();
+
+  const isResetMode = mode === 'reset';
 
   const [code, setCode] = useState('');
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
@@ -33,6 +39,14 @@ export default function OtpVerifyScreen() {
     }
     setBannerMessage(null);
     setInlineError(null);
+
+    if (isResetMode) {
+      router.push({
+        pathname: '/(auth)/reset-password',
+        params: { email: email ?? '', token: code },
+      });
+      return;
+    }
 
     try {
       await activateAccount(code).unwrap();
@@ -63,11 +77,16 @@ export default function OtpVerifyScreen() {
 
   const isLoading = isFetching || isLoggingIn;
 
+  const title = isResetMode ? t('auth.otp.resetTitle') : t('auth.otp.title');
+  const subtitle = isResetMode
+    ? t('auth.otp.resetSubtitle', { email: email ?? '' })
+    : t('auth.otp.subtitle', { email: email ?? '' });
+
   return (
     <View style={styles.container}>
-      <AppText style={styles.title}>{t('auth.otp.title')}</AppText>
+      <AppText style={styles.title}>{title}</AppText>
       <AppText style={styles.subtitle}>
-        {t('auth.otp.subtitle', { email: email ?? '' })}
+        {subtitle}
       </AppText>
 
       {bannerMessage && (

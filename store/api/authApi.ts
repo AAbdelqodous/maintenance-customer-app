@@ -21,6 +21,16 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
+}
+
 export interface ErrorResponse {
   businessErrorCode?: number;
   businessErrorDescription?: string;
@@ -57,7 +67,29 @@ export const authApi = createApi({
         method: 'GET',
       }),
     }),
+
+    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
+      query: (body) => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    resetPassword: builder.mutation<void, ResetPasswordRequest>({
+      query: (body) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
-export const { useRegisterMutation, useLoginMutation, useLazyActivateAccountQuery } = authApi;
+export const {
+  useRegisterMutation,
+  useLoginMutation,
+  useLazyActivateAccountQuery,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+} = authApi;

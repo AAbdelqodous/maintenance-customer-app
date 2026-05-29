@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 import { authApi } from './api/authApi';
+import { centerServicesApi } from './api/centerServicesApi';
 import { bookingsApi } from './api/bookingsApi';
 import { centersApi } from './api/centersApi';
 import { chatApi } from './api/chatApi';
@@ -17,6 +18,7 @@ import { loyaltyApi } from './api/loyaltyApi';
 import { vehiclesApi } from './api/vehiclesApi';
 import { remindersApi } from './api/remindersApi';
 import { referralApi } from './api/referralApi';
+import { quoteRequestsApi } from './api/quoteRequestsApi';
 import authReducer, { clearSession } from './authSlice';
 import bookingsReducer from './bookingsSlice';
 import centersReducer from './centersSlice';
@@ -42,6 +44,7 @@ export const store = configureStore({
     notifications: notificationsReducer,
     chat: chatReducer,
     [authApi.reducerPath]: authApi.reducer,
+    [centerServicesApi.reducerPath]: centerServicesApi.reducer,
     [centersApi.reducerPath]: centersApi.reducer,
     [bookingsApi.reducerPath]: bookingsApi.reducer,
     [reviewsApi.reducerPath]: reviewsApi.reducer,
@@ -57,11 +60,13 @@ export const store = configureStore({
     [vehiclesApi.reducerPath]: vehiclesApi.reducer,
     [remindersApi.reducerPath]: remindersApi.reducer,
     [referralApi.reducerPath]: referralApi.reducer,
+    [quoteRequestsApi.reducerPath]: quoteRequestsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       unauthorizedMiddleware,
       authApi.middleware,
+      centerServicesApi.middleware,
       centersApi.middleware,
       bookingsApi.middleware,
       reviewsApi.middleware,
@@ -77,6 +82,7 @@ export const store = configureStore({
       vehiclesApi.middleware,
       remindersApi.middleware,
       referralApi.middleware,
+      quoteRequestsApi.middleware,
     ),
 });
 
