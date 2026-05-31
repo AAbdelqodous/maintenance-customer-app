@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '../../lib/constants/config';
 import { RootState } from '../index';
+import type { FulfillmentMode, PickupWindow, ServiceAddress } from '../../types/fulfillment';
 
 // ── Types ───────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,13 @@ export interface Booking {
   paidAmount?: number;
   estimatedCost?: number;
   finalCost?: number;
+  /** Spec 023 — deposit the center required, snapshotted at creation (KD). Absent/0 = none. */
+  depositAmount?: number;
+  /** Spec 008 — how the service is fulfilled, the address/window, and the fee (KD). */
+  fulfillmentMode?: FulfillmentMode;
+  serviceAddress?: ServiceAddress;
+  pickupWindow?: PickupWindow;
+  fulfillmentFee?: number;
   specialInstructions?: string;
   cancelledBy?: CancelledBy;
   cancelledReason?: string;
@@ -94,6 +102,11 @@ export interface CreateBookingRequest {
   paymentMethod: PaymentMethod;
   customerPhone: string;
   specialInstructions?: string;
+  /** Spec 008 — fulfillment choice (defaults DROP_OFF; address/window required for non-drop-off). */
+  fulfillmentMode?: FulfillmentMode;
+  serviceAddressId?: number;
+  serviceAddress?: ServiceAddress;
+  pickupWindow?: PickupWindow;
 }
 
 export interface UpdateBookingRequest {

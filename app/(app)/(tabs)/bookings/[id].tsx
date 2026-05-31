@@ -19,6 +19,8 @@ import {
 } from '../../../../store/api/paymentsApi';
 import { PaymentStatusBadge } from '../../../../components/payments/PaymentStatusBadge';
 import { formatKD } from '../../../../lib/money';
+import { LogisticsTimeline } from '../../../../components/fulfillment/LogisticsTimeline';
+import { useGetBookingLogisticsQuery, useReChooseFulfillmentMutation } from '../../../../store/api/fulfillmentApi';
 
 export default function BookingDetailScreen() {
   const { t, i18n } = useTranslation();
@@ -34,6 +36,10 @@ export default function BookingDetailScreen() {
   const { data: invoice, refetch: refetchInvoice } = useGetBookingInvoiceQuery(bookingId, { skip: !bookingId });
   const [releaseEscrow] = useReleaseEscrowMutation();
   const [raiseProblem] = useRaiseProblemMutation();
+  // Spec 008 — logistics for pickup/at-home bookings (display-only; center drives the legs).
+  const isLogisticsMode = !!booking?.fulfillmentMode && booking.fulfillmentMode !== 'DROP_OFF';
+  const { data: logistics } = useGetBookingLogisticsQuery(bookingId, { skip: !bookingId || !isLogisticsMode });
+  const [reChoose] = useReChooseFulfillmentMutation();
   const [cancelBooking] = useCancelBookingMutation();
   const [createConversation] = useCreateConversationMutation();
   const [uploadCustomerMedia, { isLoading: isUploading }] = useUploadCustomerMediaMutation();
@@ -306,6 +312,19 @@ export default function BookingDetailScreen() {
                 <AppText style={styles.price}>KD {booking.finalCost.toFixed(3)}</AppText>
               </View>
             )}
+            {/* Spec 023 — deposit the center required at booking creation. */}
+            {!!booking.depositAmount && booking.depositAmount > 0 && (
+              <View style={styles.depositBox}>
+                <View style={[styles.paymentRow, isRTL && styles.rowRtl]}>
+                  <View style={[styles.depositLabelWrap, isRTL && styles.rowRtl]}>
+                    <Ionicons name="shield-checkmark-outline" size={16} color="#7B1FA2" />
+                    <AppText style={styles.depositLabel}>{t('booking.depositRequired')}</AppText>
+                  </View>
+                  <AppText style={styles.depositValue}>{formatKD(booking.depositAmount, isRTL ? 'ar' : 'en')}</AppText>
+                </View>
+                <AppText style={styles.depositNote}>{t('booking.depositNote')}</AppText>
+              </View>
+            )}
           </View>
         </View>
 
@@ -322,6 +341,21 @@ export default function BookingDetailScreen() {
           </View>
         )}
 
+        {/* Spec 008 — fulfillment logistics (pickup & delivery / at-home), center-driven. */}
+        {isLogisticsMode && logistics && (
+          <View style={styles.section}>
+            <AppText style={styles.sectionTitle}>{t('fulfillment.howFulfilled')}</AppText>
+            <LogisticsTimeline status={logistics} />
+            {logistics.declined && (
+              <AppButton
+                title={t('fulfillment.switchToDropOff')}
+                onPress={() => reChoose({ bookingId, mode: 'DROP_OFF' })}
+                style={{ marginTop: 12 }}
+              />
+            )}
+          </View>
+        )}
+
         {/* Payment (spec 007 — escrow lifecycle) */}
         {invoice && (
           <View style={styles.section}>
@@ -333,12 +367,31 @@ export default function BookingDetailScreen() {
             </View>
 
             {invoice.paymentStatus === PaymentStatus.PENDING && (
-              <AppButton
-                title={`${t('payments.pay')} · ${formatKD(invoice.total, isRTL ? 'ar' : 'en')}`}
-                onPress={() =>
-                  router.push({ pathname: '/(app)/(tabs)/bookings/pay', params: { bookingId: String(bookingId) } })
-                }
-              />
+              <View style={styles.payActions}>
+                {/* Spec 023 — deposit due upfront; once paid, the balance button nets it out. */}
+                {!!invoice.depositRequired && invoice.depositRequired > 0 && !invoice.depositPaid && (
+                  <AppButton
+                    title={`${t('payments.payDeposit')} · ${formatKD(invoice.depositRequired, isRTL ? 'ar' : 'en')}`}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(app)/(tabs)/bookings/pay',
+                        params: { bookingId: String(bookingId), mode: 'deposit' },
+                      })
+                    }
+                  />
+                )}
+                {!!invoice.depositPaid && invoice.depositPaid > 0 && (
+                  <AppText style={styles.depositPaidNote}>
+                    {t('payments.depositPaidNote', { amount: formatKD(invoice.depositPaid, isRTL ? 'ar' : 'en') })}
+                  </AppText>
+                )}
+                <AppButton
+                  title={`${t('payments.pay')} · ${formatKD(invoice.amountDue ?? invoice.total, isRTL ? 'ar' : 'en')}`}
+                  onPress={() =>
+                    router.push({ pathname: '/(app)/(tabs)/bookings/pay', params: { bookingId: String(bookingId) } })
+                  }
+                />
+              </View>
             )}
 
             {invoice.paymentStatus === PaymentStatus.HELD && (
@@ -510,6 +563,15 @@ export default function BookingDetailScreen() {
           <View style={styles.dialog}>
             <AppText style={styles.dialogTitle}>{t('booking.cancel')}</AppText>
             <AppText style={styles.dialogMessage}>{t('booking.cancelReasonPlaceholder')}</AppText>
+            {/* Spec 023 — warn before forfeiting a non-refundable deposit. */}
+            {!!invoice?.depositPaid && invoice.depositPaid > 0 && invoice.depositRefundable === false && (
+              <View style={styles.forfeitWarning}>
+                <Ionicons name="warning-outline" size={18} color="#C62828" />
+                <AppText style={styles.forfeitText}>
+                  {t('booking.depositForfeitWarning', { amount: formatKD(invoice.depositPaid, isRTL ? 'ar' : 'en') })}
+                </AppText>
+              </View>
+            )}
             <View style={styles.dialogInput}>
               <AppText style={styles.inputLabel}>{t('booking.cancelReason')}</AppText>
               <TextInput
@@ -695,6 +757,56 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  rowRtl: {
+    flexDirection: 'row-reverse',
+  },
+  depositBox: {
+    backgroundColor: '#F5EEF8',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 4,
+  },
+  depositLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  depositLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7B1FA2',
+  },
+  depositValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#7B1FA2',
+  },
+  depositNote: {
+    fontSize: 12,
+    color: '#9575CD',
+    marginTop: 4,
+  },
+  depositPaidNote: {
+    fontSize: 13,
+    color: '#7B1FA2',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  forfeitWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  forfeitText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#C62828',
+    fontWeight: '600',
   },
   paymentLabel: {
     fontSize: 14,

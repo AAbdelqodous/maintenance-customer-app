@@ -12,6 +12,7 @@ import {
   PaymentMethod,
   useGetBookingInvoiceQuery,
   useGetSavedMethodsQuery,
+  useInitiateDepositMutation,
   useInitiatePaymentMutation,
 } from '../../../../store/api/paymentsApi';
 import { useGetWalletQuery } from '../../../../store/api/walletApi';
@@ -23,8 +24,9 @@ function genIdempotencyKey(): string {
 
 // Spec 007 US1 (pay) + US3 (wallet split) + US4 (saved cards / save this card).
 export default function PayScreen() {
-  const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
+  const { bookingId, mode } = useLocalSearchParams<{ bookingId: string; mode?: string }>();
   const id = Number(bookingId);
+  const isDeposit = mode === 'deposit';
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const locale = i18n.dir() === 'rtl' ? 'ar' : 'en';
@@ -33,7 +35,9 @@ export default function PayScreen() {
   const { data: invoice, isLoading, isError, refetch } = useGetBookingInvoiceQuery(id);
   const { data: savedMethods } = useGetSavedMethodsQuery();
   const { data: wallet } = useGetWalletQuery();
-  const [initiatePayment, { isLoading: paying }] = useInitiatePaymentMutation();
+  const [initiatePayment, { isLoading: payingFull }] = useInitiatePaymentMutation();
+  const [initiateDeposit, { isLoading: payingDeposit }] = useInitiateDepositMutation();
+  const paying = payingFull || payingDeposit;
 
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [selectedSavedId, setSelectedSavedId] = useState<number | null>(null);
@@ -59,12 +63,15 @@ export default function PayScreen() {
     );
   }
 
-  const reconcileOk = sumLinesFils(invoice.lines.map((l) => l.amount)) === invoice.total;
+  // What this attempt charges: the deposit, or the balance owed (total − deposit already paid).
+  const chargeable = isDeposit ? (invoice.depositRequired ?? 0) : (invoice.amountDue ?? invoice.total);
+  // Line-sum reconciliation only applies to the full invoice; a deposit is a flat upfront amount.
+  const reconcileOk = isDeposit ? true : sumLinesFils(invoice.lines.map((l) => l.amount)) === invoice.total;
   const walletBalance = wallet?.balance ?? 0;
   const walletAvailable = invoice.walletApplicable && walletBalance > 0;
   const remainder = useWallet
-    ? Math.max(0, Math.round((invoice.total - walletBalance) * 1000) / 1000)
-    : invoice.total;
+    ? Math.max(0, Math.round((chargeable - walletBalance) * 1000) / 1000)
+    : chargeable;
   const walletCoversAll = useWallet && remainder === 0;
   // A method is needed unless the wallet covers the whole amount.
   const methodChosen = selectedSavedId != null || method != null;
@@ -87,8 +94,9 @@ export default function PayScreen() {
         ? PaymentMethod.CARD
         : method;
     if (!effectiveMethod) return;
+    const initiate = isDeposit ? initiateDeposit : initiatePayment;
     try {
-      const res = await initiatePayment({
+      const res = await initiate({
         bookingId: id,
         method: effectiveMethod,
         useWalletBalance: useWallet,
@@ -122,7 +130,16 @@ export default function PayScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <InvoiceLines lines={invoice.lines} total={invoice.total} />
+        {isDeposit ? (
+          <View style={styles.depositCard}>
+            <Ionicons name="shield-checkmark-outline" size={26} color="#7B1FA2" />
+            <AppText style={styles.depositTitle}>{t('payments.depositTitle')}</AppText>
+            <AppText style={styles.depositAmount}>{formatKD(chargeable, locale)}</AppText>
+            <AppText style={styles.depositNote}>{t('payments.depositNote')}</AppText>
+          </View>
+        ) : (
+          <InvoiceLines lines={invoice.lines} total={invoice.total} />
+        )}
 
         {walletAvailable && (
           <View style={styles.walletRow}>
@@ -175,7 +192,7 @@ export default function PayScreen() {
           <ActivityIndicator color="#fff" />
         ) : (
           <AppText style={styles.payText}>
-            {t('payments.payNow')} · {formatKD(walletCoversAll ? invoice.total : remainder, locale)}
+            {(isDeposit ? t('payments.payDeposit') : t('payments.payNow'))} · {formatKD(walletCoversAll ? chargeable : remainder, locale)}
           </AppText>
         )}
       </TouchableOpacity>
@@ -188,6 +205,10 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 24 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
   muted: { fontSize: 15, color: '#757575', textAlign: 'center' },
+  depositCard: { backgroundColor: '#F5EEF8', borderRadius: 14, padding: 20, alignItems: 'center', gap: 6 },
+  depositTitle: { fontSize: 15, fontWeight: '600', color: '#7B1FA2' },
+  depositAmount: { fontSize: 28, fontWeight: '800', color: '#7B1FA2' },
+  depositNote: { fontSize: 12, color: '#9575CD', textAlign: 'center' },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A2E', marginTop: 24, marginBottom: 12 },
   walletRow: {
     flexDirection: 'row',

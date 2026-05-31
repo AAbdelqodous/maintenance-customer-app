@@ -21,6 +21,8 @@ import { referralApi } from './api/referralApi';
 import { quoteRequestsApi } from './api/quoteRequestsApi';
 import { paymentsApi } from './api/paymentsApi';
 import { walletApi } from './api/walletApi';
+import { fulfillmentApi } from './api/fulfillmentApi';
+import { addressesApi } from './api/addressesApi';
 import authReducer, { clearSession } from './authSlice';
 import bookingsReducer from './bookingsSlice';
 import centersReducer from './centersSlice';
@@ -65,6 +67,8 @@ export const store = configureStore({
     [quoteRequestsApi.reducerPath]: quoteRequestsApi.reducer,
     [paymentsApi.reducerPath]: paymentsApi.reducer,
     [walletApi.reducerPath]: walletApi.reducer,
+    [fulfillmentApi.reducerPath]: fulfillmentApi.reducer,
+    [addressesApi.reducerPath]: addressesApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -89,6 +93,8 @@ export const store = configureStore({
       quoteRequestsApi.middleware,
       paymentsApi.middleware,
       walletApi.middleware,
+      fulfillmentApi.middleware,
+      addressesApi.middleware,
     ),
 });
 

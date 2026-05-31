@@ -53,6 +53,12 @@ export interface BookingInvoice {
   releaseEligible: boolean;
   autoReleaseAt?: string;
   receiptUrl?: string;
+  /** Spec 023 — deposit netting. `amountDue` = total − depositPaid (the balance still owed). */
+  depositRequired?: number;
+  depositPaid?: number;
+  amountDue?: number;
+  /** False when a customer cancellation would forfeit the paid deposit (RETAIN policy). */
+  depositRefundable?: boolean;
 }
 
 export interface InitiatePaymentRequest {
@@ -112,6 +118,12 @@ export const paymentsApi = createApi({
       invalidatesTags: (_r, _e, { bookingId }) => [{ type: 'Invoice' as const, id: bookingId }],
     }),
 
+    // Spec 023 — pay the booking's required deposit upfront (credited against the balance later).
+    initiateDeposit: builder.mutation<InitiatePaymentResponse, InitiatePaymentRequest>({
+      query: (body) => ({ url: '/payments/deposit', method: 'POST', body }),
+      invalidatesTags: (_r, _e, { bookingId }) => [{ type: 'Invoice' as const, id: bookingId }],
+    }),
+
     // Polled after the gateway return — the backend is the source of truth (R3).
     getPaymentStatus: builder.query<PaymentStatusResponse, number>({
       query: (paymentId) => `/payments/${paymentId}`,
@@ -146,6 +158,7 @@ export const paymentsApi = createApi({
 export const {
   useGetBookingInvoiceQuery,
   useInitiatePaymentMutation,
+  useInitiateDepositMutation,
   useLazyGetPaymentStatusQuery,
   useReleaseEscrowMutation,
   useRaiseProblemMutation,
