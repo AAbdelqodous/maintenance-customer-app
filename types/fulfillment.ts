@@ -42,10 +42,12 @@ export interface PickupWindow {
   endTime: string; // HH:mm
 }
 
-// Ordered logistics states per mode (DROP_OFF uses normal booking status — no legs).
+// Ordered logistics states per mode (DROP_OFF uses normal booking status — no legs). These mirror the
+// backend's authoritative legs and are only a fallback: the timeline prefers `LogisticsStatus.legs`,
+// which the backend returns on every logistics/advance response.
 export const LOGISTICS_STATES: Record<Exclude<FulfillmentMode, 'DROP_OFF'>, string[]> = {
-  PICKUP_DELIVERY: ['PICKUP_SCHEDULED', 'EN_ROUTE_TO_CUSTOMER', 'COLLECTED', 'AT_CENTER', 'OUT_FOR_RETURN', 'DELIVERED'],
-  AT_HOME: ['TECH_ASSIGNED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'],
+  PICKUP_DELIVERY: ['PICKUP_SCHEDULED', 'DRIVER_EN_ROUTE_PICKUP', 'PICKED_UP', 'AT_CENTER', 'READY_FOR_RETURN', 'OUT_FOR_DELIVERY', 'DELIVERED'],
+  AT_HOME: ['TECH_ASSIGNED', 'TECH_EN_ROUTE', 'TECH_ARRIVED', 'SERVICE_IN_PROGRESS', 'SERVICE_COMPLETED'],
 };
 
 export interface LogisticsStatus {
@@ -55,6 +57,7 @@ export interface LogisticsStatus {
   etaText?: string | null;
   declined: boolean;
   declineReason?: string | null;
+  legs?: string[]; // authoritative ordered sequence for the mode (server-driven)
   updatedAt: string;
 }
 

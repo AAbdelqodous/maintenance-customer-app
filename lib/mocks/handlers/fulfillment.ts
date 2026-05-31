@@ -8,8 +8,9 @@ const BASE = API_BASE_URL.replace(/\/$/, '');
 // Per-booking logistics state (advances on each poll to exercise the timeline). Center-driven.
 const logistics = new Map<number, { mode: string; index: number; declined: boolean }>();
 
-const AT_HOME_STATES = ['TECH_ASSIGNED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'];
-const PICKUP_STATES = ['PICKUP_SCHEDULED', 'EN_ROUTE_TO_CUSTOMER', 'COLLECTED', 'AT_CENTER', 'OUT_FOR_RETURN', 'DELIVERED'];
+// Mirror the backend's authoritative legs (FulfillmentService).
+const AT_HOME_STATES = ['TECH_ASSIGNED', 'TECH_EN_ROUTE', 'TECH_ARRIVED', 'SERVICE_IN_PROGRESS', 'SERVICE_COMPLETED'];
+const PICKUP_STATES = ['PICKUP_SCHEDULED', 'DRIVER_EN_ROUTE_PICKUP', 'PICKED_UP', 'AT_CENTER', 'READY_FOR_RETURN', 'OUT_FOR_DELIVERY', 'DELIVERED'];
 
 export function __resetFulfillmentMock() {
   logistics.clear();
@@ -49,6 +50,7 @@ export const fulfillmentHandlers = [
       etaText: entry.index < states.length - 1 ? '~30 min' : null,
       declined: entry.declined,
       declineReason: entry.declined ? 'Outside service area' : null,
+      legs: states,
       updatedAt: new Date().toISOString(),
     };
     return HttpResponse.json(status, { status: 200 });
@@ -58,8 +60,9 @@ export const fulfillmentHandlers = [
     const id = Number(params.id);
     const body = (await request.json()) as { mode: string };
     logistics.set(id, { mode: body.mode, index: 0, declined: false });
+    const states = body.mode === 'PICKUP_DELIVERY' ? PICKUP_STATES : body.mode === 'AT_HOME' ? AT_HOME_STATES : [];
     return HttpResponse.json(
-      { bookingId: id, mode: body.mode, currentState: 'PICKUP_SCHEDULED', declined: false, updatedAt: new Date().toISOString() },
+      { bookingId: id, mode: body.mode, currentState: states[0] ?? null, declined: false, legs: states, updatedAt: new Date().toISOString() },
       { status: 200 },
     );
   }),

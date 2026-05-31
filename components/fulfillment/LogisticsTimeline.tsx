@@ -12,7 +12,8 @@ export function LogisticsTimeline({ status }: { status: LogisticsStatus }) {
   const isRTL = i18n.dir() === 'rtl';
 
   if (status.mode === 'DROP_OFF') return null;
-  const states = LOGISTICS_STATES[status.mode] ?? [];
+  // Prefer the server's authoritative legs; fall back to the local map only if absent.
+  const states = status.legs?.length ? status.legs : (LOGISTICS_STATES[status.mode] ?? []);
   const currentIdx = states.indexOf(status.currentState);
 
   return (

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppText } from '../ui/AppText';
+import { MapLocationPicker, type PickedLocation } from './MapLocationPicker';
 import { useCreateAddressMutation, useGetAddressesQuery } from '../../store/api/addressesApi';
 import type { AddressLabel, ServiceAddress } from '../../types/fulfillment';
 
@@ -29,17 +30,34 @@ export function AddressPicker({
   const [governorate, setGovernorate] = useState('');
   const [area, setArea] = useState('');
   const [note, setNote] = useState('');
+  const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
 
   const outOfArea = (g: string) => serviceAreaGovernorates.length > 0 && !serviceAreaGovernorates.includes(g);
 
+  // A map pin / GPS fix sets the coordinates and prefills governorate + area when still blank — the
+  // customer can override either field manually afterwards.
+  const onPickLocation = (loc: PickedLocation) => {
+    setCoords({ lat: loc.lat, lng: loc.lng });
+    if (loc.governorate && !governorate.trim()) setGovernorate(loc.governorate);
+    if (loc.area && !area.trim()) setArea(loc.area);
+  };
+
+  const resetForm = () => {
+    setGovernorate(''); setArea(''); setNote(''); setCoords({});
+  };
+
   const saveNew = async () => {
     if (!governorate.trim()) return;
-    const body: ServiceAddress = { label, governorate: governorate.trim(), area: area.trim() || undefined, note: note.trim() || undefined };
+    const body: ServiceAddress = {
+      label, governorate: governorate.trim(),
+      area: area.trim() || undefined, note: note.trim() || undefined,
+      lat: coords.lat, lng: coords.lng,
+    };
     try {
       const created = await createAddress(body).unwrap();
       onSelect(created);
       setAdding(false);
-      setGovernorate(''); setArea(''); setNote('');
+      resetForm();
     } catch {
       // surfaced by the caller's error handling
     }
@@ -84,12 +102,13 @@ export function AddressPicker({
               </TouchableOpacity>
             ))}
           </View>
+          <MapLocationPicker value={coords} onChange={onPickLocation} />
           <TextInput style={[styles.input, isRTL && styles.inputRtl, governorate && outOfArea(governorate) && styles.inputWarn]} value={governorate} onChangeText={setGovernorate} placeholder={t('fulfillment.governorate')} placeholderTextColor="#9E9E9E" />
           {!!governorate && outOfArea(governorate) && <AppText style={styles.ooa}>{t('fulfillment.outOfArea')}</AppText>}
           <TextInput style={[styles.input, isRTL && styles.inputRtl]} value={area} onChangeText={setArea} placeholder={t('fulfillment.area')} placeholderTextColor="#9E9E9E" />
           <TextInput style={[styles.input, isRTL && styles.inputRtl]} value={note} onChangeText={setNote} placeholder={t('fulfillment.addressNote')} placeholderTextColor="#9E9E9E" />
           <View style={[styles.formActions, isRTL && styles.rowRtl]}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setAdding(false)}><AppText style={styles.cancelText}>{t('common.cancel')}</AppText></TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => { setAdding(false); resetForm(); }}><AppText style={styles.cancelText}>{t('common.cancel')}</AppText></TouchableOpacity>
             <TouchableOpacity style={[styles.saveBtn, (!governorate.trim() || creating) && styles.disabled]} onPress={saveNew} disabled={!governorate.trim() || creating}>
               {creating ? <ActivityIndicator color="#fff" /> : <AppText style={styles.saveText}>{t('fulfillment.saveAddress')}</AppText>}
             </TouchableOpacity>
