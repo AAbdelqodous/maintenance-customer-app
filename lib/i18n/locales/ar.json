@@ -176,10 +176,13 @@
     "notesPlaceholder": "أي تفاصيل إضافية...",
     "paymentMethodLabel": "طريقة الدفع",
     "estimatedPrice": "السعر المقدر",
+    "depositRequired": "العربون المطلوب",
+    "depositNote": "يُخصم من فاتورتك النهائية — ويُسترد وفق سياسة الإلغاء لدى المركز.",
     "confirm": "تأكيد الحجز",
     "cancel": "إلغاء الحجز",
     "cancelReason": "سبب الإلغاء",
     "cancelReasonPlaceholder": "لماذا تريد الإلغاء؟",
+    "depositForfeitWarning": "عربونك البالغ {{amount}} غير قابل للاسترداد وسيحتفظ به المركز إذا ألغيت.",
     "reschedule": "إعادة جدولة",
     "myBookings": "حجوزاتي",
     "bookingDetails": "تفاصيل الحجز",
@@ -674,5 +677,166 @@
       "PENDING": "معلقة",
       "COMPLETED": "مكتملة"
     }
+  },
+  "quoteRequests": {
+    "getQuotes": "احصل على عروض أسعار",
+    "getQuotesSubtitle": "صِف مشكلتك مرة واحدة ودع المراكز تتنافس",
+    "compose": {
+      "title": "احصل على عروض أسعار",
+      "category": "ماذا تحتاج؟",
+      "categoryRequired": "يرجى اختيار الفئة",
+      "describe": "صِف المشكلة",
+      "describePlaceholder": "مثال: المكيف لا يبرّد، بدأت المشكلة الأسبوع الماضي",
+      "descriptionRequired": "يرجى وصف المشكلة",
+      "attach": "أضف صورًا أو فيديو",
+      "area": "منطقتك",
+      "fulfillment": "كيف تود تنفيذ الخدمة؟",
+      "send": "إرسال إلى المراكز",
+      "reachCount": "أُرسل إلى {{count}} مراكز",
+      "reachCountOne": "أُرسل إلى مركز واحد",
+      "noMatches": "لا توجد مراكز مطابقة. جرّب توسيع المنطقة أو الفئة.",
+      "widen": "توسيع البحث"
+    },
+    "list": {
+      "title": "طلبات عروض الأسعار",
+      "empty": "لا توجد لديك طلبات عروض أسعار بعد.",
+      "responses": "{{count}} عروض",
+      "responsesOne": "عرض واحد"
+    },
+    "detail": {
+      "responses": "العروض",
+      "noResponsesYet": "لا توجد عروض بعد — المراكز تراجع طلبك.",
+      "countdown": "ينتهي {{when}}",
+      "compare": "قارن",
+      "sortBy": "ترتيب حسب",
+      "sort": {
+        "price": "السعر",
+        "rating": "التقييم",
+        "distance": "المسافة",
+        "soonest": "الأقرب موعدًا"
+      },
+      "accept": "قبول",
+      "accepting": "جاري الحجز…",
+      "cancel": "إلغاء الطلب",
+      "ask": "اطرح سؤالاً",
+      "viewBooking": "عرض الحجز",
+      "cancelledBanner": "لقد ألغيت هذا الطلب"
+    },
+    "response": {
+      "from": "من",
+      "price": "السعر",
+      "range": "{{min}} – {{max}}",
+      "duration": "تقدير {{minutes}} دقيقة",
+      "includes": "يشمل",
+      "respondedAt": "رد {{when}}",
+      "notSelected": "لم يُختر",
+      "withdrawn": "مسحوب"
+    },
+    "expired": {
+      "title": "انتهت صلاحية هذا الطلب",
+      "widen": "أرسل طلبًا جديدًا أوسع",
+      "bookDirectly": "احجز مركزًا مباشرة"
+    }
+  },
+  "fulfillment": {
+    "title": "كيف نريد تنفيذ الخدمة؟",
+    "howFulfilled": "طريقة التنفيذ",
+    "free": "مجاني",
+    "fromFee": "من {{amount}}",
+    "eta": "الوصول المتوقع {{eta}}",
+    "declined": "لا يستطيع المركز تنفيذ هذا الخيار",
+    "outOfArea": "خارج نطاق خدمة المركز",
+    "addAddress": "إضافة عنوان جديد",
+    "useMyLocation": "استخدام موقعي الحالي",
+    "locationDenied": "تم رفض إذن الموقع — أدخل العنوان يدويًا.",
+    "locationError": "تعذّر تحديد موقعك — أدخله يدويًا.",
+    "pinHint": "اضغط أو اسحب الدبوس لتحديد الموقع بدقة",
+    "saveAddress": "حفظ العنوان",
+    "governorate": "المحافظة",
+    "area": "المنطقة / القطعة (اختياري)",
+    "addressNote": "ملاحظة (مثال: فيلا 5، البوابة الخلفية)",
+    "selectAddress": "عنوان الخدمة",
+    "window": "نافذة الاستلام / الوصول",
+    "windowDate": "التاريخ",
+    "windowStart": "من",
+    "windowEnd": "إلى",
+    "windowRequired": "اختر عنوانًا ونافذة وقت للمتابعة.",
+    "feeLabel": "رسوم التنفيذ",
+    "reChoose": "اختر خيارًا آخر",
+    "switchToDropOff": "التحويل إلى التسليم بالمركز",
+    "mode": { "DROP_OFF": "التسليم بالمركز", "PICKUP_DELIVERY": "استلام وتوصيل", "AT_HOME": "خدمة منزلية" },
+    "modeSub": { "DROP_OFF": "أحضرها إلى المركز", "PICKUP_DELIVERY": "نستلمها ونعيدها", "AT_HOME": "يأتي الفني إليك" },
+    "label": { "HOME": "المنزل", "WORK": "العمل", "OTHER": "أخرى" },
+    "logistics": {
+      "PICKUP_SCHEDULED": "تم جدولة الاستلام",
+      "DRIVER_EN_ROUTE_PICKUP": "السائق في الطريق إليك",
+      "PICKED_UP": "تم الاستلام",
+      "AT_CENTER": "في المركز",
+      "READY_FOR_RETURN": "جاهز للإرجاع",
+      "OUT_FOR_DELIVERY": "في طريق التسليم",
+      "DELIVERED": "تم التسليم",
+      "TECH_ASSIGNED": "تم تعيين فني",
+      "TECH_EN_ROUTE": "في الطريق",
+      "TECH_ARRIVED": "وصل",
+      "SERVICE_IN_PROGRESS": "جاري العمل",
+      "SERVICE_COMPLETED": "اكتمل"
+    },
+    "addresses": { "title": "العناوين المحفوظة", "empty": "لا توجد عناوين محفوظة بعد.", "deleteConfirm": "حذف هذا العنوان؟" }
+  },
+  "payments": {
+    "pay": "ادفع",
+    "payNow": "ادفع الآن",
+    "payDeposit": "ادفع العربون",
+    "depositTitle": "عربون الحجز",
+    "depositNote": "محفوظ في الضمان ويُخصم من فاتورتك النهائية.",
+    "depositPaidNote": "العربون المدفوع: {{amount}} — مخصوم أدناه.",
+    "total": "الإجمالي",
+    "method": {
+      "knet": "كي نت",
+      "card": "بطاقة",
+      "applePay": "Apple Pay",
+      "googlePay": "Google Pay",
+      "wallet": "المحفظة"
+    },
+    "useWallet": "استخدم رصيد المحفظة",
+    "remainder": "المتبقي للدفع",
+    "saveCard": "احفظ هذه البطاقة للمرة القادمة",
+    "status": {
+      "pending": "بانتظار الدفع",
+      "held": "محجوز (ضمان)",
+      "released": "تم الإفراج",
+      "paid": "مدفوع",
+      "refunded": "مسترد",
+      "failed": "فشل الدفع"
+    },
+    "release": "تأكيد والإفراج",
+    "releaseHint": "متاح بعد أن يحدد المركز اكتمال العمل",
+    "reportProblem": "الإبلاغ عن مشكلة",
+    "autoRelease": "إفراج تلقائي في {{date}}",
+    "result": {
+      "securedTitle": "تم تأمين الدفعة",
+      "securedBody": "محجوزة بأمان حتى تؤكد اكتمال العمل.",
+      "failedTitle": "لم تكتمل الدفعة",
+      "processing": "ما زالت قيد المعالجة — سنخطرك",
+      "retry": "إعادة المحاولة"
+    },
+    "receipt": "عرض الإيصال",
+    "mismatch": "عدم تطابق المبلغ — يرجى التحديث"
+  },
+  "wallet": {
+    "title": "المحفظة",
+    "balance": "الرصيد",
+    "topUp": "شحن",
+    "amount": "المبلغ",
+    "tx": {
+      "topup": "شحن",
+      "payment": "دفعة",
+      "refund": "استرداد",
+      "loyalty": "رصيد ولاء"
+    },
+    "savedMethods": "البطاقات المحفوظة",
+    "remove": "إزالة",
+    "empty": "لا توجد معاملات بعد",
+    "topUpComplete": "اكتمل الشحن"
   }
 }

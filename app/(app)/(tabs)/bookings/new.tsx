@@ -21,6 +21,11 @@ import {
     useGetServicesForCenterCategoryQuery,
 } from '../../../../store/api/centerServicesApi';
 import { useGetCenterByIdQuery } from '../../../../store/api/centersApi';
+import { useGetCenterFulfillmentQuery } from '../../../../store/api/fulfillmentApi';
+import { FulfillmentModePicker } from '../../../../components/fulfillment/FulfillmentModePicker';
+import { AddressPicker } from '../../../../components/fulfillment/AddressPicker';
+import { computeFee, type FulfillmentMode, type PickupWindow, type ServiceAddress } from '../../../../types/fulfillment';
+import { formatKD } from '../../../../lib/money';
 
 export default function NewBookingScreen() {
   const { t, i18n } = useTranslation();
@@ -36,6 +41,18 @@ export default function NewBookingScreen() {
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  // Spec 008 — fulfillment choice (defaults drop-off; address+window required for non-drop-off).
+  const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>('DROP_OFF');
+  const [serviceAddress, setServiceAddress] = useState<ServiceAddress | null>(null);
+  const [windowStart, setWindowStart] = useState('');
+  const [windowEnd, setWindowEnd] = useState('');
+
+  const { data: capability } = useGetCenterFulfillmentQuery(
+    { centerId: Number(centerId), serviceId: selectedService?.id },
+    { skip: !centerId || !selectedService },
+  );
+  const fulfillmentFee = capability ? computeFee(capability.feeByMode[fulfillmentMode]) ?? 0 : 0;
+  const needsAddress = fulfillmentMode !== 'DROP_OFF';
 
   const { data: center, isLoading: centerLoading } = useGetCenterByIdQuery(
     Number(centerId),
@@ -109,6 +126,14 @@ export default function NewBookingScreen() {
       Alert.alert(t('common.error'), t('booking.phoneRequired'));
       return;
     }
+    // Spec 008 — non-drop-off requires a service address and a time window before continuing.
+    const pickupWindow: PickupWindow | undefined = needsAddress
+      ? { date: selectedDate, startTime: windowStart, endTime: windowEnd }
+      : undefined;
+    if (needsAddress && (!serviceAddress?.id || !windowStart || !windowEnd)) {
+      Alert.alert(t('common.error'), t('fulfillment.windowRequired'));
+      return;
+    }
     router.push({
       pathname: '/(app)/(tabs)/bookings/confirmation',
       params: {
@@ -125,6 +150,9 @@ export default function NewBookingScreen() {
         customerPhone: customerPhone.trim(),
         serviceDescription: description || '',
         specialInstructions: notes || '',
+        fulfillmentMode,
+        ...(serviceAddress?.id ? { serviceAddressId: String(serviceAddress.id) } : {}),
+        ...(pickupWindow ? { pickupWindow: JSON.stringify(pickupWindow) } : {}),
       },
     });
   };
@@ -308,6 +336,47 @@ export default function NewBookingScreen() {
               </View>
             </View>
 
+            {/* Spec 008 — Fulfillment */}
+            {capability && capability.supportedModes.length > 1 && (
+              <>
+                <AppText style={styles.stepTitle}>{t('fulfillment.title')}</AppText>
+                <FulfillmentModePicker capability={capability} selected={fulfillmentMode} onSelect={setFulfillmentMode} />
+                {needsAddress && (
+                  <View style={{ marginTop: 12 }}>
+                    <AppText style={styles.fulfillSub}>{t('fulfillment.selectAddress')}</AppText>
+                    <AddressPicker
+                      serviceAreaGovernorates={capability.serviceAreaGovernorates}
+                      selected={serviceAddress}
+                      onSelect={setServiceAddress}
+                    />
+                    <AppText style={[styles.fulfillSub, { marginTop: 12 }]}>{t('fulfillment.window')}</AppText>
+                    <View style={[styles.windowRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                      <TextInput
+                        style={[styles.windowInput, isRTL && { textAlign: 'right' }]}
+                        value={windowStart}
+                        onChangeText={setWindowStart}
+                        placeholder={`${t('fulfillment.windowStart')} (09:00)`}
+                        placeholderTextColor="#9E9E9E"
+                      />
+                      <TextInput
+                        style={[styles.windowInput, isRTL && { textAlign: 'right' }]}
+                        value={windowEnd}
+                        onChangeText={setWindowEnd}
+                        placeholder={`${t('fulfillment.windowEnd')} (11:00)`}
+                        placeholderTextColor="#9E9E9E"
+                      />
+                    </View>
+                  </View>
+                )}
+                {fulfillmentFee > 0 && (
+                  <View style={[styles.feeRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <AppText style={styles.feeLabel}>{t('fulfillment.feeLabel')}</AppText>
+                    <AppText style={styles.feeValue}>{formatKD(fulfillmentFee, isRTL ? 'ar' : 'en')}</AppText>
+                  </View>
+                )}
+              </>
+            )}
+
             {/* Payment Method */}
             <AppText style={styles.stepTitle}>{t('booking.paymentMethodLabel')}</AppText>
             {paymentMethods.map((method) => (
@@ -404,6 +473,12 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: 20 },
   centerName: { fontSize: 20, fontWeight: '700', color: '#1A1A2E', marginBottom: 16 },
   stepTitle: { fontSize: 18, fontWeight: '600', color: '#1A1A2E', marginBottom: 16 },
+  fulfillSub: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 8 },
+  windowRow: { flexDirection: 'row', gap: 10 },
+  windowInput: { flex: 1, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: '#1A1A2E', backgroundColor: '#fff' },
+  feeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#E3F2FD', borderRadius: 10, padding: 12, marginTop: 12 },
+  feeLabel: { fontSize: 14, fontWeight: '600', color: '#1565C0' },
+  feeValue: { fontSize: 15, fontWeight: '800', color: '#1565C0' },
   serviceCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 12, padding: 16, marginBottom: 12,

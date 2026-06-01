@@ -8,7 +8,11 @@ and home appliances. Real-time chat with centers is supported.
 
 **Target Market:** Kuwait (primary), GCC / Middle East (expansion)
 **Languages:** Arabic RTL (primary), English
-**Status:** Phase 1 (auth + foundation) ✅ complete. Phase 2 (core screens) ~60% complete.
+**Status:** Phase 1 (auth + foundation) ✅ + Phase 2 (core screens) ✅ complete.
+Phases 4–5 (deep-trust, retention) partially built — `store/api/` already has
+`quoteApi`, `progressApi`, `mediaApi`, `loyaltyApi`, `vehiclesApi`, `remindersApi`,
+`referralApi` alongside the core slices. Competitive specs `007`/`008`/`009`
+(payments, fulfillment, get-quotes) are authored through `tasks.md`, not yet built.
 
 ---
 
@@ -202,7 +206,30 @@ cd ~/MaintenanceCenters/maintenance-customer-app
 
 npx expo start --web          # Web (browser)
 npx expo start                # Native (requires Android/iOS emulator)
+
+# Run against the in-app mock backend (no real backend needed):
+EXPO_PUBLIC_USE_MOCKS=true npx expo start
 ```
+
+---
+
+## 🧪 Mock Backend (MSW) — for building features before the backend ships
+
+Shared **Mock Service Worker** layer so frontend specs (007–009, …) are built/tested without the real API.
+
+- **Handlers registry:** `lib/mocks/handlers/index.ts` aggregates per-feature handlers (e.g.
+  `handlers/quoteRequests.ts` = spec 009's in-memory `quoterequest` backend). Add new features here.
+- **Dev runtime:** `lib/mocks/native.ts` (`msw/native`) started by `lib/mocks/enableMocks.ts`, called
+  from `app/_layout.tsx`, **gated by `EXPO_PUBLIC_USE_MOCKS=true`** (no-op / not bundled otherwise).
+- **Jest:** `lib/mocks/server.ts` (`msw/node`) + `lib/mocks/setupJest.ts` (global listen/reset/close
+  via `setupFilesAfterEnv`). See `__tests__/store/quoteRequestsApi.test.ts` for the pattern (it
+  exercises an RTK Query slice end-to-end through MSW).
+
+> ⚠️ **MSW is pinned to `2.11.0`** on purpose: 2.12+ adds `rettime`, an ESM-only dep that breaks under
+> jest-expo's transformer. jest config carries the needed glue: `moduleNameMapper` maps `msw`/`msw/node`
+> to their CJS builds, and `transformIgnorePatterns` whitelists MSW's ESM deps + `react-redux`. RTK Query
+> tests must use fake timers + `resetApiState()` in `afterEach` (see the sample) to avoid post-teardown
+> timer warnings. Do **not** bump msw without re-validating jest.
 
 ---
 
@@ -261,6 +288,36 @@ npx expo start                # Native (requires Android/iOS emulator)
 - [ ] Certificate pinning
 - [ ] Fill stub screens (help, privacy, terms, notification prefs)
 - [ ] App store submission (EAS build)
+
+### 🆕 Competitive Roadmap — New Specs (added 2026-05-29)
+
+Three customer-side specs to win the Kuwait market on the platform's two levers:
+**trust** (transparent, reversible money) and **convenience** (we come to you,
+the market quotes you). All three now carry the **full Spec Kit artifact set**
+(`spec.md` + `plan.md` + `research.md` + `data-model.md` + `quickstart.md` +
+`contracts/` + `tasks.md`) — `specify`/`plan`/`tasks` phases complete, ready to
+`implement`. Each mirrors a center-app spec.
+
+| Spec | Folder | Artifacts | Why it matters | Center-side mirror |
+|------|--------|-----------|----------------|--------------------|
+| **In-App Payments, Wallet & Escrow** | `specs/007-payments-wallet-escrow` | full + 36 tasks (2 contracts) | Pay an approved quote via KNET / card / Apple Pay / Google Pay / wallet; funds held in **escrow** until the customer confirms the work is done. Directly answers "I paid and the job was bad." | center `023-payments-earnings-payouts` |
+| **Pickup & Delivery / At-Home Service** | `specs/008-pickup-and-mobile-service` | full + 23 tasks | Choose drop-off, **pickup & delivery**, or **at-home (mobile)** service at booking time, with transparent fulfillment fees and logistics status tracking. The headline convenience differentiator. | center booking/profile + fulfillment capability |
+| **Get Quotes (Reverse Marketplace)** | `specs/009-get-quotes-marketplace` | full + 22 tasks | Describe a problem once (+ photos), broadcast to multiple centers, compare competing **quotes** side by side, accept one → booking. Attacks the price-trust deficit head-on. | center `024-quote-requests-inbox` |
+
+**Cross-cutting decisions locked in the plans/research (read before implementing):**
+- **Payments** (`007`): gateway = **MyFatoorah / Tap**; hosted-checkout WebView keeps the app out of PCI scope; **backend is the source of truth** (poll `GET /payments/{id}` after the gateway return) + a per-attempt **idempotency key** → no double-charge; escrow is consumed as a status machine, not computed client-side. New dep: `react-native-webview`.
+- **Get Quotes** (`009`): **matching + accept are server-side**; responses are **sealed** (customer sees all, centers never see competitors); reuses `chatApi` for per-request chat; accepted bookings carry `originRequestId`.
+- **Pickup/At-Home** (`008`): center **declares capability** (modes/area/fees) — the client consumes it; the **fee is always shown before commit** and lands as a `FULFILLMENT_FEE` invoice line (`007`); logistics is **display-only** (center-driven). New deps: `expo-location` (+ `react-native-maps` native, web/manual fallback).
+- **Placement convention** (avoid bottom-tab bloat): new areas live off the tab bar — `app/(app)/wallet/`, `app/(app)/quote-requests/`, `app/(app)/addresses/`. New money fields are **KD, 3 decimals**.
+
+> **Backend gap note:** the backend has only `booking.PaymentMethod` /
+> `PaymentStatus` enum stubs — no real payment/escrow/wallet, no fulfillment
+> logistics, and no reverse-marketplace quote-request domain yet (the existing
+> `quote` module is owner→customer for an *existing* booking). These specs assume
+> new backend packages designed in each spec's `plan.md`.
+>
+> **Field-name reminder:** follow the "do not rename" table above — new money
+> fields use KD with 3 decimals; reuse `bookingStatus`, `isVerified`, etc.
 
 ---
 

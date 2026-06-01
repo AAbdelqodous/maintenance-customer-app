@@ -7,6 +7,7 @@ import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
 import { PaymentMethod, useCreateBookingMutation } from '../../../../store/api/bookingsApi';
 import { useGetCenterByIdQuery } from '../../../../store/api/centersApi';
+import type { FulfillmentMode } from '../../../../types/fulfillment';
 
 interface BookingSummary {
   centerId: number;
@@ -71,6 +72,10 @@ export default function BookingConfirmationScreen() {
         paymentMethod: bookingData.paymentMethod,
         customerPhone: bookingData.customerPhone,
         specialInstructions: bookingData.specialInstructions,
+        // Spec 008 — carry the chosen fulfillment (collected on the review step).
+        fulfillmentMode: (params.fulfillmentMode as FulfillmentMode) || undefined,
+        serviceAddressId: params.serviceAddressId ? Number(params.serviceAddressId) : undefined,
+        pickupWindow: params.pickupWindow ? JSON.parse(params.pickupWindow as string) : undefined,
       }).unwrap();
 
       router.push({
@@ -79,6 +84,7 @@ export default function BookingConfirmationScreen() {
           bookingId: String(result.id),
           bookingNumber: result.bookingNumber ?? String(result.id),
           centerName: centerName,
+          depositAmount: result.depositAmount ? String(result.depositAmount) : '',
         },
       });
     } catch (err: any) {

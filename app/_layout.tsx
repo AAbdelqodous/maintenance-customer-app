@@ -10,8 +10,12 @@ import { setSession, setUser, decodeJwt } from '../store/authSlice';
 import { setLocale } from '../store/uiSlice';
 import { getJwt } from '../lib/secureStorage';
 import { initI18n, getStoredLocale } from '../lib/i18n';
+import { enableMocksIfRequested } from '../lib/mocks/enableMocks';
 
 import './globals.css';
+
+// Dev-only: start the MSW mock backend when EXPO_PUBLIC_USE_MOCKS=true (no-op otherwise).
+enableMocksIfRequested();
 
 const ONBOARDING_KEY = '@app/onboarding';
 
