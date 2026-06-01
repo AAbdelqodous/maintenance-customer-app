@@ -1,24 +1,73 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
-import { BookingStatus, PaymentMethod, ServiceType, useCancelBookingMutation, useGetBookingByIdQuery } from '../../../../store/api/bookingsApi';
+import QuoteCard from '../../../../components/bookings/QuoteCard';
+import { BookingStatus, PaymentMethod, getBookingServiceLabel, useCancelBookingMutation, useGetBookingByIdQuery } from '../../../../store/api/bookingsApi';
 import { useCreateConversationMutation } from '../../../../store/api/chatApi';
+import { useGetCustomerMediaQuery, useUploadCustomerMediaMutation } from '../../../../store/api/mediaApi';
+import { useGetBookingQuoteQuery } from '../../../../store/api/quoteApi';
+import {
+  PaymentStatus,
+  useGetBookingInvoiceQuery,
+  useRaiseProblemMutation,
+  useReleaseEscrowMutation,
+} from '../../../../store/api/paymentsApi';
+import { PaymentStatusBadge } from '../../../../components/payments/PaymentStatusBadge';
+import { formatKD } from '../../../../lib/money';
+import { LogisticsTimeline } from '../../../../components/fulfillment/LogisticsTimeline';
+import { useGetBookingLogisticsQuery, useReChooseFulfillmentMutation } from '../../../../store/api/fulfillmentApi';
 
 export default function BookingDetailScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
+  const isRTL = i18n.dir() === 'rtl';
 
   const bookingId = Number(params.id);
-  const { data: booking, isLoading } = useGetBookingByIdQuery(bookingId);
+  const { data: booking, isLoading, refetch: refetchBooking } = useGetBookingByIdQuery(bookingId);
+  const { data: quote, refetch: refetchQuote } = useGetBookingQuoteQuery(bookingId, {
+    skip: booking?.bookingStatus !== BookingStatus.QUOTE_READY,
+  });
+  const { data: invoice, refetch: refetchInvoice } = useGetBookingInvoiceQuery(bookingId, { skip: !bookingId });
+  const [releaseEscrow] = useReleaseEscrowMutation();
+  const [raiseProblem] = useRaiseProblemMutation();
+  // Spec 008 — logistics for pickup/at-home bookings (display-only; center drives the legs).
+  const isLogisticsMode = !!booking?.fulfillmentMode && booking.fulfillmentMode !== 'DROP_OFF';
+  const { data: logistics } = useGetBookingLogisticsQuery(bookingId, { skip: !bookingId || !isLogisticsMode });
+  const [reChoose] = useReChooseFulfillmentMutation();
   const [cancelBooking] = useCancelBookingMutation();
   const [createConversation] = useCreateConversationMutation();
+  const [uploadCustomerMedia, { isLoading: isUploading }] = useUploadCustomerMediaMutation();
+  const { data: problemPhotos } = useGetCustomerMediaQuery(bookingId, { skip: !bookingId });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  const canUploadPhotos = booking &&
+    (booking.bookingStatus === BookingStatus.PENDING ||
+     booking.bookingStatus === BookingStatus.CONFIRMED ||
+     booking.bookingStatus === BookingStatus.IN_PROGRESS);
+
+  const handleUploadProblemPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsMultipleSelection: false,
+    });
+
+    if (result.canceled || !result.assets?.length) return;
+
+    const asset = result.assets[0];
+    try {
+      await uploadCustomerMedia({ bookingId, asset }).unwrap();
+    } catch {
+      Alert.alert(t('common.error'), t('common.retry'));
+    }
+  };
 
   const handleCancelBooking = async () => {
     if (!cancelReason.trim()) {
@@ -80,20 +129,10 @@ export default function BookingDetailScreen() {
         return '#757575';
       case BookingStatus.REJECTED:
         return '#F44336';
+      case BookingStatus.QUOTE_READY:
+        return '#FF6F00';
       default:
         return '#757575';
-    }
-  };
-
-  const getServiceTypeLabel = (type: ServiceType) => {
-    switch (type) {
-      case ServiceType.CAR: return t('booking.serviceType.car');
-      case ServiceType.ELECTRONICS: return t('booking.serviceType.electronics');
-      case ServiceType.HOME_APPLIANCE: return t('booking.serviceType.home_appliance');
-      case ServiceType.EMERGENCY: return t('booking.serviceType.emergency');
-      case ServiceType.INSTALLATION: return t('booking.serviceType.installation');
-      case ServiceType.REPAIR: return t('booking.serviceType.repair');
-      default: return type;
     }
   };
 
@@ -168,10 +207,25 @@ export default function BookingDetailScreen() {
         <View style={styles.section}>
           <AppText style={styles.sectionTitle}>{t('booking.service')}</AppText>
           <View style={styles.infoCard}>
+            {booking.category && (
+              <>
+                <View style={styles.infoRow}>
+                  <Ionicons name="grid-outline" size={20} color="#2196F3" />
+                  <AppText style={styles.infoLabel}>{t('booking.categoryLabel')}</AppText>
+                  <AppText style={styles.infoValue}>
+                    {i18n.language === 'ar' ? booking.category.nameAr : booking.category.nameEn}
+                  </AppText>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             <View style={styles.infoRow}>
               <Ionicons name="build-outline" size={20} color="#2196F3" />
-              <AppText style={styles.infoLabel}>{t('booking.serviceTypeLabel')}</AppText>
-              <AppText style={styles.infoValue}>{getServiceTypeLabel(booking.serviceType)}</AppText>
+              <AppText style={styles.infoLabel}>{t('booking.serviceLabel')}</AppText>
+              <AppText style={styles.infoValue}>
+                {getBookingServiceLabel(booking, t, i18n.language === 'ar')}
+                {!booking.service ? ` (${t('booking.legacy.tag')})` : ''}
+              </AppText>
             </View>
             <View style={styles.divider} />
             <View style={styles.infoRow}>
@@ -194,6 +248,36 @@ export default function BookingDetailScreen() {
             <AppText style={styles.sectionTitle}>{t('booking.description')}</AppText>
             <View style={styles.descriptionCard}>
               <AppText style={styles.description}>{booking.serviceDescription}</AppText>
+            </View>
+          </View>
+        )}
+
+        {/* Problem Photos */}
+        {canUploadPhotos && (
+          <View style={styles.section}>
+            <AppText style={styles.sectionTitle}>{t('booking.problemPhotos')}</AppText>
+            <View style={styles.photosCard}>
+              {problemPhotos && problemPhotos.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosRow}>
+                  {problemPhotos.map((photo) => (
+                    <Image key={photo.id} source={{ uri: photo.url }} style={styles.photoThumb} />
+                  ))}
+                </ScrollView>
+              )}
+              <TouchableOpacity
+                style={styles.addPhotoButton}
+                onPress={handleUploadProblemPhoto}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#2196F3" />
+                ) : (
+                  <>
+                    <Ionicons name="camera-outline" size={20} color="#2196F3" />
+                    <AppText style={styles.addPhotoText}>{t('booking.addProblemPhoto')}</AppText>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -228,8 +312,149 @@ export default function BookingDetailScreen() {
                 <AppText style={styles.price}>KD {booking.finalCost.toFixed(3)}</AppText>
               </View>
             )}
+            {/* Spec 023 — deposit the center required at booking creation. */}
+            {!!booking.depositAmount && booking.depositAmount > 0 && (
+              <View style={styles.depositBox}>
+                <View style={[styles.paymentRow, isRTL && styles.rowRtl]}>
+                  <View style={[styles.depositLabelWrap, isRTL && styles.rowRtl]}>
+                    <Ionicons name="shield-checkmark-outline" size={16} color="#7B1FA2" />
+                    <AppText style={styles.depositLabel}>{t('booking.depositRequired')}</AppText>
+                  </View>
+                  <AppText style={styles.depositValue}>{formatKD(booking.depositAmount, isRTL ? 'ar' : 'en')}</AppText>
+                </View>
+                <AppText style={styles.depositNote}>{t('booking.depositNote')}</AppText>
+              </View>
+            )}
           </View>
         </View>
+
+        {/* Quote */}
+        {booking.bookingStatus === BookingStatus.QUOTE_READY && quote && (
+          <View style={styles.section}>
+            <AppText style={styles.sectionTitle}>{t('booking.quote.title')}</AppText>
+            <QuoteCard
+              quote={quote}
+              isRTL={isRTL}
+              onApproved={() => { refetchBooking(); refetchQuote(); }}
+              onRejected={() => { refetchBooking(); refetchQuote(); }}
+            />
+          </View>
+        )}
+
+        {/* Spec 008 — fulfillment logistics (pickup & delivery / at-home), center-driven. */}
+        {isLogisticsMode && logistics && (
+          <View style={styles.section}>
+            <AppText style={styles.sectionTitle}>{t('fulfillment.howFulfilled')}</AppText>
+            <LogisticsTimeline status={logistics} />
+            {logistics.declined && (
+              <AppButton
+                title={t('fulfillment.switchToDropOff')}
+                onPress={() => reChoose({ bookingId, mode: 'DROP_OFF' })}
+                style={{ marginTop: 12 }}
+              />
+            )}
+          </View>
+        )}
+
+        {/* Payment (spec 007 — escrow lifecycle) */}
+        {invoice && (
+          <View style={styles.section}>
+            <View style={styles.payHeaderRow}>
+              <AppText style={styles.sectionTitle}>{t('payments.total')}</AppText>
+              {invoice.paymentStatus !== PaymentStatus.PENDING && (
+                <PaymentStatusBadge status={invoice.paymentStatus} />
+              )}
+            </View>
+
+            {invoice.paymentStatus === PaymentStatus.PENDING && (
+              <View style={styles.payActions}>
+                {/* Spec 023 — deposit due upfront; once paid, the balance button nets it out. */}
+                {!!invoice.depositRequired && invoice.depositRequired > 0 && !invoice.depositPaid && (
+                  <AppButton
+                    title={`${t('payments.payDeposit')} · ${formatKD(invoice.depositRequired, isRTL ? 'ar' : 'en')}`}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(app)/(tabs)/bookings/pay',
+                        params: { bookingId: String(bookingId), mode: 'deposit' },
+                      })
+                    }
+                  />
+                )}
+                {!!invoice.depositPaid && invoice.depositPaid > 0 && (
+                  <AppText style={styles.depositPaidNote}>
+                    {t('payments.depositPaidNote', { amount: formatKD(invoice.depositPaid, isRTL ? 'ar' : 'en') })}
+                  </AppText>
+                )}
+                <AppButton
+                  title={`${t('payments.pay')} · ${formatKD(invoice.amountDue ?? invoice.total, isRTL ? 'ar' : 'en')}`}
+                  onPress={() =>
+                    router.push({ pathname: '/(app)/(tabs)/bookings/pay', params: { bookingId: String(bookingId) } })
+                  }
+                />
+              </View>
+            )}
+
+            {invoice.paymentStatus === PaymentStatus.HELD && (
+              <View style={styles.payActions}>
+                <AppButton
+                  title={t('payments.release')}
+                  disabled={!invoice.releaseEligible}
+                  onPress={() =>
+                    Alert.alert(t('payments.release'), t('payments.result.securedBody'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('payments.release'),
+                        onPress: async () => {
+                          try { await releaseEscrow(bookingId).unwrap(); refetchInvoice(); } catch { /* keep state */ }
+                        },
+                      },
+                    ])
+                  }
+                />
+                {!invoice.releaseEligible && (
+                  <AppText style={styles.payHint}>{t('payments.releaseHint')}</AppText>
+                )}
+                {!!invoice.autoReleaseAt && invoice.releaseEligible && (
+                  <AppText style={styles.payHint}>
+                    {t('payments.autoRelease', {
+                      date: new Date(invoice.autoReleaseAt).toLocaleDateString(isRTL ? 'ar' : 'en'),
+                    })}
+                  </AppText>
+                )}
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert(t('payments.reportProblem'), undefined, [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('payments.reportProblem'),
+                        style: 'destructive',
+                        onPress: () => raiseProblem({ bookingId, reason: 'Reported from booking detail' }),
+                      },
+                    ])
+                  }
+                >
+                  <AppText style={styles.reportText}>{t('payments.reportProblem')}</AppText>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {(invoice.paymentStatus === PaymentStatus.RELEASED || invoice.paymentStatus === PaymentStatus.PAID) &&
+              !!invoice.receiptUrl && (
+                <TouchableOpacity onPress={() => router.push('/(app)/(tabs)/bookings/[id]')}>
+                  <AppText style={styles.receiptText}>{t('payments.receipt')}</AppText>
+                </TouchableOpacity>
+              )}
+
+            {invoice.paymentStatus === PaymentStatus.FAILED && (
+              <AppButton
+                title={t('payments.result.retry')}
+                onPress={() =>
+                  router.push({ pathname: '/(app)/(tabs)/bookings/pay', params: { bookingId: String(bookingId) } })
+                }
+              />
+            )}
+          </View>
+        )}
 
         {/* Cancellation Info */}
         {booking.cancelledReason && (
@@ -264,6 +489,32 @@ export default function BookingDetailScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
+          {(booking.bookingStatus === BookingStatus.CONFIRMED ||
+            booking.bookingStatus === BookingStatus.QUOTE_READY ||
+            booking.bookingStatus === BookingStatus.IN_PROGRESS) && (
+            <AppButton
+              title={t('booking.trackProgress')}
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/(tabs)/bookings/progress',
+                  params: { id: String(bookingId) },
+                })
+              }
+              variant="secondary"
+              style={styles.actionButton as any}
+            />
+          )}
+          <AppButton
+            title={t('booking.workPhotos')}
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/(tabs)/bookings/photos',
+                params: { id: String(bookingId) },
+              })
+            }
+            variant="secondary"
+            style={styles.actionButton as any}
+          />
           {canCancel && (
             <AppButton
               title={t('booking.cancel')}
@@ -312,6 +563,15 @@ export default function BookingDetailScreen() {
           <View style={styles.dialog}>
             <AppText style={styles.dialogTitle}>{t('booking.cancel')}</AppText>
             <AppText style={styles.dialogMessage}>{t('booking.cancelReasonPlaceholder')}</AppText>
+            {/* Spec 023 — warn before forfeiting a non-refundable deposit. */}
+            {!!invoice?.depositPaid && invoice.depositPaid > 0 && invoice.depositRefundable === false && (
+              <View style={styles.forfeitWarning}>
+                <Ionicons name="warning-outline" size={18} color="#C62828" />
+                <AppText style={styles.forfeitText}>
+                  {t('booking.depositForfeitWarning', { amount: formatKD(invoice.depositPaid, isRTL ? 'ar' : 'en') })}
+                </AppText>
+              </View>
+            )}
             <View style={styles.dialogInput}>
               <AppText style={styles.inputLabel}>{t('booking.cancelReason')}</AppText>
               <TextInput
@@ -388,6 +648,11 @@ const styles = StyleSheet.create({
     color: '#1A1A2E',
     marginBottom: 12,
   },
+  payHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  payActions: { gap: 10 },
+  payHint: { fontSize: 13, color: '#757575', textAlign: 'center' },
+  reportText: { color: '#E53935', fontWeight: '600', textAlign: 'center', paddingVertical: 8 },
+  receiptText: { color: '#2196F3', fontWeight: '600', paddingVertical: 8 },
   centerCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -493,6 +758,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  rowRtl: {
+    flexDirection: 'row-reverse',
+  },
+  depositBox: {
+    backgroundColor: '#F5EEF8',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 4,
+  },
+  depositLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  depositLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7B1FA2',
+  },
+  depositValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#7B1FA2',
+  },
+  depositNote: {
+    fontSize: 12,
+    color: '#9575CD',
+    marginTop: 4,
+  },
+  depositPaidNote: {
+    fontSize: 13,
+    color: '#7B1FA2',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  forfeitWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  forfeitText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#C62828',
+    fontWeight: '600',
+  },
   paymentLabel: {
     fontSize: 14,
     color: '#757575',
@@ -539,8 +854,44 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#1A1A2E',
   },
-  actions: {
+  photosCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    gap: 12,
+  },
+  photosRow: {
     flexDirection: 'row',
+  },
+  photoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  addPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#2196F3',
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  addPhotoText: {
+    color: '#2196F3',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  actions: {
+    flexDirection: 'column',
     gap: 12,
     marginTop: 20,
   },

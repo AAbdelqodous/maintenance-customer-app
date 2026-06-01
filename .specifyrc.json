@@ -1,0 +1,21 @@
+{
+  "repository": "MaintenanceCenters/maintenance-customer-app",
+  "personalAccessToken": "<your-personal-access-token>",
+  "rules": [
+    {
+      "name": "React Native tokens",
+      "path": "./src/tokens/react-native.ts",
+      "parser": "@specifyapp/parser-to-react-native"
+    },
+    {
+      "name": "Tailwind tokens",
+      "path": "./src/tokens/tailwind.js",
+      "parser": "@specifyapp/parser-to-tailwind"
+    },
+    {
+      "name": "All tokens JSON",
+      "path": "./src/tokens/tokens.json",
+      "parser": "@specifyapp/parser-to-json"
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -27,6 +27,8 @@ export default function ProfileScreen() {
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [imageTimestamp, setImageTimestamp] = useState(Date.now());
 
   const [editForm, setEditForm] = useState({
     firstname: '',
@@ -61,7 +63,7 @@ export default function ProfileScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -69,6 +71,10 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
+
+      // Show picked image immediately — don't wait for the server round-trip
+      setLocalImageUri(asset.uri);
+
       const formData = new FormData();
       // On web, expo-image-picker provides a real File object in asset.file.
       // On native, we must use the {uri, name, type} object form.
@@ -84,9 +90,10 @@ export default function ProfileScreen() {
 
       try {
         await uploadProfileImage(formData).unwrap();
-        refetch();
+        setImageTimestamp(Date.now());
         Alert.alert(t('common.success'), t('profile.photoUpdated'));
       } catch (error) {
+        setLocalImageUri(null); // revert optimistic preview on failure
         Alert.alert(t('common.error'), t('errors.serverError'));
       }
     }
@@ -142,6 +149,10 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('profile.logoutConfirm'))) logout();
+      return;
+    }
     Alert.alert(
       t('profile.logout'),
       t('profile.logoutConfirm'),
@@ -196,9 +207,12 @@ export default function ProfileScreen() {
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <TouchableOpacity onPress={handlePickImage} disabled={uploading} style={styles.avatarTouchable}>
-            {profile?.profileImageUrl ? (
+            {(localImageUri ?? profile?.profileImageUrl) ? (
               <Image
-                source={{ uri: profile.profileImageUrl?.startsWith('http') ? profile.profileImageUrl : `${API_BASE_URL.replace('/api/v1', '')}${profile.profileImageUrl}` }}
+                source={{
+                  uri: localImageUri
+                    ?? `${profile!.profileImageUrl!.startsWith('http') ? profile!.profileImageUrl! : `${API_BASE_URL.replace('/api/v1', '')}${profile!.profileImageUrl}`}?t=${imageTimestamp}`,
+                }}
                 style={styles.avatarImage}
               />
             ) : (
@@ -281,6 +295,50 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <AppText style={styles.sectionTitle}>{t('profile.settings')}</AppText>
         <View style={styles.sectionContent}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/(app)/wallet')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="wallet-outline" size={20} color="#2196F3" />
+              <AppText style={styles.menuText}>{t('wallet.title')}</AppText>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#9E9E9E" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/(app)/(tabs)/profile/loyalty')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="star-outline" size={20} color="#2196F3" />
+              <AppText style={styles.menuText}>{t('profile.myLoyalty')}</AppText>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#9E9E9E" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/(app)/vehicles')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="car-outline" size={20} color="#2196F3" />
+              <AppText style={styles.menuText}>{t('profile.myVehicles')}</AppText>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#9E9E9E" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/(app)/(tabs)/profile/referral')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="gift-outline" size={20} color="#2196F3" />
+              <AppText style={styles.menuText}>{t('profile.referralProgram')}</AppText>
+            </View>
+            <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={20} color="#9E9E9E" />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => handleNavigateTo('/(app)/settings/language')}
@@ -512,9 +570,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   avatarContainer: {
-    marginRight: 16,
-  },
-  avatarContainer: {
     width: 80,
     height: 80,
     alignSelf: 'center',
@@ -536,11 +591,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
   },
   avatarEditBadge: {
     position: 'absolute',
@@ -633,6 +683,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+  },
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   menuText: {
     flex: 1,

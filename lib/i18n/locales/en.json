@@ -40,6 +40,8 @@
     "otp": {
       "title": "Verify Your Email",
       "subtitle": "We sent a 6-digit code to {{email}}",
+      "resetTitle": "Enter Reset Code",
+      "resetSubtitle": "We sent a 6-digit reset code to {{email}}",
       "submitButton": "Verify",
       "resendCode": "Resend Code",
       "newCodeSent": "A new verification code has been sent to your email.",
@@ -56,6 +58,25 @@
       "forgotPassword": "Forgot Password?",
       "noAccount": "Don't have an account?",
       "registerLink": "Create Account"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email and we'll send you a reset code.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "submitButton": "Send Reset Code",
+      "codeSent": "A reset code has been sent to your email."
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "subtitle": "Enter the code from your email and your new password.",
+      "passwordLabel": "New Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmLabel": "Confirm New Password",
+      "confirmPlaceholder": "Re-enter your new password",
+      "submitButton": "Reset Password",
+      "passwordMismatch": "Passwords do not match",
+      "success": "Password reset successfully! Please sign in."
     }
   },
   "home": {
@@ -131,7 +152,15 @@
     "averageRating": "Average Rating",
     "rating": "Rating",
     "seeAllReviews": "See All Reviews",
-    "viewAllReviews": "View all {{count}} reviews"
+    "viewAllReviews": "View all {{count}} reviews",
+    "trustBadges": "Trust & Certifications",
+    "badges": {
+      "VERIFIED_BUSINESS": "Verified Business",
+      "YEARS_EXPERIENCE": "{{years}} Years Experience",
+      "CERTIFIED_TECHNICIANS": "Certified Technicians",
+      "SATISFACTION_GUARANTEE": "Satisfaction Guarantee",
+      "LICENSED": "Licensed"
+    }
   },
   "booking": {
     "title": "Book a Service",
@@ -147,10 +176,13 @@
     "notesPlaceholder": "Any additional details...",
     "paymentMethodLabel": "Payment Method",
     "estimatedPrice": "Estimated Price",
+    "depositRequired": "Deposit required",
+    "depositNote": "Applied to your final bill — refunded per the center's cancellation policy.",
     "confirm": "Confirm Booking",
     "cancel": "Cancel Booking",
     "cancelReason": "Cancellation Reason",
     "cancelReasonPlaceholder": "Why are you cancelling?",
+    "depositForfeitWarning": "Your {{amount}} deposit is non-refundable and will be kept by the center if you cancel.",
     "reschedule": "Reschedule",
     "myBookings": "My Bookings",
     "bookingDetails": "Booking Details",
@@ -169,6 +201,10 @@
     "bookYourFirstService": "Book your first service now!",
     "selectCenterFirst": "Please select a center first to make a booking.",
     "browseCenters": "Browse Centers",
+    "noServicesTitle": "No Services Available",
+    "noServicesMessage": "This center does not currently offer any bookable services. Try one of our top-rated centers below.",
+    "recommendedCenters": "Highly Recommended Centers",
+    "bookWithCenter": "Book Now",
     "serviceType": {
       "car": "Car",
       "electronics": "Electronics",
@@ -183,7 +219,8 @@
       "in_progress": "In Progress",
       "completed": "Completed",
       "cancelled": "Cancelled",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "quote_ready": "Quote Ready"
     },
     "paymentMethod": {
       "cash": "Cash",
@@ -208,7 +245,68 @@
     "reminderNotification": "You will be reminded before your appointment.",
     "viewBooking": "View My Bookings",
     "bookAnother": "Book Another Service",
-    "shareBooking": "Share Booking"
+    "shareBooking": "Share Booking",
+    "trackProgress": "Track Progress",
+    "workPhotos": "Work Photos",
+    "quoteReady": "Quote Ready",
+    "progress": {
+      "title": "Work Progress",
+      "noUpdates": "No progress updates yet",
+      "estimatedCompletion": "Est. completion",
+      "delayed": "Delayed",
+      "stages": {
+        "RECEIVED": "Received",
+        "DIAGNOSING": "Diagnosing",
+        "PARTS_ORDERED": "Parts Ordered",
+        "WORK_IN_PROGRESS": "Work in Progress",
+        "QUALITY_CHECK": "Quality Check",
+        "READY_FOR_PICKUP": "Ready for Pickup",
+        "PICKED_UP": "Picked Up"
+      }
+    },
+    "photos": {
+      "title": "Work Photos",
+      "noPhotos": "No photos yet",
+      "categories": {
+        "DIAGNOSTICS": "Diagnostics",
+        "PARTS": "Parts",
+        "WORK_IN_PROGRESS": "Work in Progress",
+        "COMPLETED": "Completed"
+      }
+    },
+    "quote": {
+      "title": "Service Quote",
+      "description": "Description",
+      "parts": "Parts",
+      "labour": "Labour",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "tax": "Tax",
+      "total": "Total",
+      "estimatedDuration": "Estimated Duration",
+      "approve": "Approve Quote",
+      "reject": "Reject Quote",
+      "confirmApprove": "Approve this quote and allow work to begin?",
+      "confirmReject": "Reject this quote?",
+      "rejectReasonPlaceholder": "Reason for rejection (optional)",
+      "approved": "Quote Approved",
+      "rejected": "Quote Rejected",
+      "noItems": "No items"
+    },
+    "categorySelect": {
+      "title": "Select Category",
+      "empty": "This center has no available services at the moment.",
+      "error": "Could not load categories. Please try again.",
+      "centerUnavailable": "This center is no longer accepting bookings.",
+      "retry": "Try Again",
+      "back": "Go Back"
+    },
+    "legacy": {
+      "tag": "Legacy",
+      "fallbackLabel": "Service"
+    },
+    "categoryLabel": "Category",
+    "serviceLabel": "Service"
   },
   "review": {
     "title": "Write a Review",
@@ -271,7 +369,10 @@
     "about": "About",
     "photoUpdated": "Profile photo updated successfully!",
     "photoPermissionTitle": "Permission Required",
-    "photoPermissionMessage": "Please allow access to your photo library to update your profile picture."
+    "photoPermissionMessage": "Please allow access to your photo library to update your profile picture.",
+    "myLoyalty": "My Loyalty",
+    "myVehicles": "My Vehicles",
+    "referralProgram": "Referral Program"
   },
   "settings": {
     "language": "Language",
@@ -483,5 +584,259 @@
     "sessionExpired": "Your session has expired. Please sign in again.",
     "appCrash": "An unexpected error occurred.",
     "restartApp": "Restart App"
+  },
+  "loyalty": {
+    "title": "My Loyalty",
+    "points": "Points",
+    "availablePoints": "Available Points",
+    "lifetimePoints": "Lifetime Points",
+    "tier": "Tier",
+    "tierProgress": "Progress to {{tier}}",
+    "expiringWarning": "{{points}} points expire on {{date}}",
+    "viewRewards": "View Rewards",
+    "history": "History",
+    "noRewards": "No rewards available",
+    "rewardsTitle": "Rewards Catalog",
+    "redeem": "Redeem",
+    "redeemConfirm": "Redeem this reward for {{points}} points?",
+    "redeemSuccess": "Reward redeemed!",
+    "yourCode": "Your code",
+    "copyCode": "Copy Code",
+    "codeCopied": "Code copied!",
+    "codeExpires": "Expires {{date}}",
+    "insufficient": "Insufficient points",
+    "tierRequired": "Requires {{tier}} tier",
+    "historyTitle": "Points History",
+    "noHistory": "No transactions yet",
+    "loadMore": "Load more",
+    "earned": "Earned",
+    "spent": "Spent",
+    "tiers": {
+      "BRONZE": "Bronze",
+      "SILVER": "Silver",
+      "GOLD": "Gold",
+      "PLATINUM": "Platinum"
+    },
+    "rewardTypes": {
+      "DISCOUNT_PERCENT": "{{value}}% Discount",
+      "DISCOUNT_FIXED": "KD {{value}} Off",
+      "FREE_SERVICE": "Free Service"
+    }
+  },
+  "vehicles": {
+    "title": "My Vehicles",
+    "addVehicle": "Add Vehicle",
+    "noVehicles": "No vehicles yet",
+    "noVehiclesMessage": "Add your vehicle to track service history and get reminders.",
+    "make": "Make",
+    "makePlaceholder": "e.g. Toyota",
+    "model": "Model",
+    "modelPlaceholder": "e.g. Corolla",
+    "year": "Year",
+    "yearPlaceholder": "e.g. 2020",
+    "licensePlate": "License Plate",
+    "licensePlatePlaceholder": "e.g. 12345",
+    "color": "Color",
+    "colorPlaceholder": "e.g. White",
+    "mileage": "Current Mileage (km)",
+    "mileagePlaceholder": "e.g. 45000",
+    "nickname": "Nickname (optional)",
+    "nicknamePlaceholder": "e.g. My Daily Driver",
+    "primary": "Primary Vehicle",
+    "save": "Save Vehicle",
+    "dashboard": "Vehicle Dashboard",
+    "totalServices": "Total Services",
+    "totalSpent": "Total Spent",
+    "lastService": "Last Service",
+    "noHistory": "No service history yet",
+    "reminders": "Maintenance Reminders",
+    "noReminders": "No reminders",
+    "overdue": "Overdue",
+    "dueSoon": "Due Soon",
+    "upcoming": "Upcoming",
+    "daysOverdue": "{{count}} days overdue",
+    "daysLeft": "{{count}} days left",
+    "markComplete": "Mark as Done",
+    "yearInvalid": "Year must be between 1900 and {{max}}",
+    "viewReminders": "View All Reminders",
+    "deleteConfirm": "Delete this vehicle?",
+    "deleted": "Vehicle deleted"
+  },
+  "referral": {
+    "title": "Referral Program",
+    "yourCode": "Your Referral Code",
+    "shareMessage": "Join Maintenance Centers and get rewarded! Use my referral code: {{code}}",
+    "share": "Share Code",
+    "stats": "Your Referrals",
+    "total": "Total Referrals",
+    "completed": "Completed",
+    "pending": "Pending",
+    "pointsEarned": "Points Earned",
+    "noReferrals": "No referrals yet",
+    "status": {
+      "PENDING": "Pending",
+      "COMPLETED": "Completed"
+    }
+  },
+  "quoteRequests": {
+    "getQuotes": "Get Quotes",
+    "getQuotesSubtitle": "Describe your problem once and let centers compete",
+    "compose": {
+      "title": "Get Quotes",
+      "category": "What do you need?",
+      "categoryRequired": "Please choose a category",
+      "describe": "Describe the problem",
+      "describePlaceholder": "e.g. AC not cold, started last week",
+      "descriptionRequired": "Please describe the problem",
+      "attach": "Add photos or video",
+      "area": "Your area",
+      "fulfillment": "How would you like it done?",
+      "send": "Send to centers",
+      "reachCount": "Sent to {{count}} centers",
+      "reachCountOne": "Sent to 1 center",
+      "noMatches": "No centers matched. Try widening your area or category.",
+      "widen": "Widen search"
+    },
+    "list": {
+      "title": "My Quote Requests",
+      "empty": "You have no quote requests yet.",
+      "responses": "{{count}} quotes",
+      "responsesOne": "1 quote"
+    },
+    "detail": {
+      "responses": "Quotes",
+      "noResponsesYet": "No quotes yet — centers are reviewing your request.",
+      "countdown": "Expires {{when}}",
+      "compare": "Compare",
+      "sortBy": "Sort by",
+      "sort": {
+        "price": "Price",
+        "rating": "Rating",
+        "distance": "Distance",
+        "soonest": "Soonest"
+      },
+      "accept": "Accept",
+      "accepting": "Booking…",
+      "cancel": "Cancel request",
+      "ask": "Ask a question",
+      "viewBooking": "View your booking",
+      "cancelledBanner": "You cancelled this request"
+    },
+    "response": {
+      "from": "From",
+      "price": "Price",
+      "range": "{{min}} – {{max}}",
+      "duration": "Est. {{minutes}} min",
+      "includes": "Includes",
+      "respondedAt": "Replied {{when}}",
+      "notSelected": "Not selected",
+      "withdrawn": "Withdrawn"
+    },
+    "expired": {
+      "title": "This request expired",
+      "widen": "Send a new, wider request",
+      "bookDirectly": "Book a center directly"
+    }
+  },
+  "fulfillment": {
+    "title": "How should we fulfill it?",
+    "howFulfilled": "Fulfillment",
+    "free": "Free",
+    "fromFee": "from {{amount}}",
+    "eta": "ETA {{eta}}",
+    "declined": "The center can't fulfill this option",
+    "outOfArea": "Outside the center's service area",
+    "addAddress": "Add a new address",
+    "useMyLocation": "Use my current location",
+    "locationDenied": "Location permission denied — enter the address manually.",
+    "locationError": "Couldn't get your location — enter it manually.",
+    "pinHint": "Tap or drag the pin to set the exact spot",
+    "saveAddress": "Save address",
+    "governorate": "Governorate",
+    "area": "Area / block (optional)",
+    "addressNote": "Note (e.g. villa 5, gate at the back)",
+    "selectAddress": "Service address",
+    "window": "Pickup / arrival window",
+    "windowDate": "Date",
+    "windowStart": "From",
+    "windowEnd": "To",
+    "windowRequired": "Choose an address and a time window to continue.",
+    "feeLabel": "Fulfillment fee",
+    "reChoose": "Choose another option",
+    "switchToDropOff": "Switch to drop-off",
+    "mode": { "DROP_OFF": "Drop-off", "PICKUP_DELIVERY": "Pickup & delivery", "AT_HOME": "At-home service" },
+    "modeSub": { "DROP_OFF": "Bring it to the center", "PICKUP_DELIVERY": "We collect and return it", "AT_HOME": "A technician comes to you" },
+    "label": { "HOME": "Home", "WORK": "Work", "OTHER": "Other" },
+    "logistics": {
+      "PICKUP_SCHEDULED": "Pickup scheduled",
+      "DRIVER_EN_ROUTE_PICKUP": "Driver on the way to you",
+      "PICKED_UP": "Collected",
+      "AT_CENTER": "At the center",
+      "READY_FOR_RETURN": "Ready for return",
+      "OUT_FOR_DELIVERY": "Out for delivery",
+      "DELIVERED": "Delivered",
+      "TECH_ASSIGNED": "Technician assigned",
+      "TECH_EN_ROUTE": "On the way",
+      "TECH_ARRIVED": "Arrived",
+      "SERVICE_IN_PROGRESS": "Work in progress",
+      "SERVICE_COMPLETED": "Completed"
+    },
+    "addresses": { "title": "Saved Addresses", "empty": "No saved addresses yet.", "deleteConfirm": "Delete this address?" }
+  },
+  "payments": {
+    "pay": "Pay",
+    "payNow": "Pay Now",
+    "payDeposit": "Pay deposit",
+    "depositTitle": "Booking deposit",
+    "depositNote": "Held in escrow and credited against your final bill.",
+    "depositPaidNote": "Deposit paid: {{amount}} — credited below.",
+    "total": "Total",
+    "method": {
+      "knet": "KNET",
+      "card": "Card",
+      "applePay": "Apple Pay",
+      "googlePay": "Google Pay",
+      "wallet": "Wallet"
+    },
+    "useWallet": "Use wallet balance",
+    "remainder": "Remaining to pay",
+    "saveCard": "Save this card for next time",
+    "status": {
+      "pending": "Awaiting payment",
+      "held": "Secured (in escrow)",
+      "released": "Released",
+      "paid": "Paid",
+      "refunded": "Refunded",
+      "failed": "Payment failed"
+    },
+    "release": "Confirm & Release",
+    "releaseHint": "Available once the center marks the work complete",
+    "reportProblem": "Report a problem",
+    "autoRelease": "Auto-releases on {{date}}",
+    "result": {
+      "securedTitle": "Payment secured",
+      "securedBody": "Held safely until you confirm the work is done.",
+      "failedTitle": "Payment not completed",
+      "processing": "Still processing — we'll notify you",
+      "retry": "Try Again"
+    },
+    "receipt": "View receipt",
+    "mismatch": "Amount mismatch — please refresh"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Balance",
+    "topUp": "Top Up",
+    "amount": "Amount",
+    "tx": {
+      "topup": "Top-up",
+      "payment": "Payment",
+      "refund": "Refund",
+      "loyalty": "Loyalty credit"
+    },
+    "savedMethods": "Saved cards",
+    "remove": "Remove",
+    "empty": "No transactions yet",
+    "topUpComplete": "Top-up complete"
   }
 }

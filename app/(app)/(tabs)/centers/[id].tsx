@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, FlatList, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import ReviewCard from '../../../../components/listings/ReviewCard';
+import TrustBadgeList from '../../../../components/centers/TrustBadgeList';
 import { AppText } from '../../../../components/ui/AppText';
 import RatingStars from '../../../../components/ui/RatingStars';
 import { API_BASE_URL } from '../../../../lib/constants/config';
 import { useCreateConversationMutation } from '../../../../store/api/chatApi';
-import { useGetCenterByIdQuery } from '../../../../store/api/centersApi';
+import { useGetCenterByIdQuery, useGetCenterBadgesQuery } from '../../../../store/api/centersApi';
 import { useAddFavoriteMutation, useIsFavoriteQuery, useRemoveFavoriteMutation } from '../../../../store/api/favoritesApi';
 import { useGetCenterReviewsQuery, useCreateReviewMutation } from '../../../../store/api/reviewsApi';
 
@@ -23,6 +24,7 @@ export default function CenterDetailScreen() {
   const centerId = Number(params.id);
 
   const { data: center, isLoading: centerLoading } = useGetCenterByIdQuery(centerId);
+  const { data: badges } = useGetCenterBadgesQuery(centerId, { skip: true });
   const { data: reviewsData } = useGetCenterReviewsQuery({ centerId, page: 0, size: 10 });
 
   const { data: isFavoriteData, refetch: refetchIsFavorite } = useIsFavoriteQuery(centerId);
@@ -79,10 +81,7 @@ export default function CenterDetailScreen() {
   };
 
   const handleBookNow = () => {
-    router.push({
-      pathname: '/(app)/(tabs)/bookings/new',
-      params: { centerId: String(centerId) },
-    });
+    router.push(`/(app)/(tabs)/centers/${centerId}/book/category`);
   };
 
   const handleWriteReview = () => setShowReviewModal(true);
@@ -108,7 +107,7 @@ export default function CenterDetailScreen() {
     <>
       <Stack.Screen
         options={{
-          title: isRTL ? center?.centerNameAr : center?.centerNameEn,
+          title: isRTL ? center?.nameAr : center?.nameEn,
           headerStyle: {
             backgroundColor: '#fff',
           },
@@ -140,7 +139,7 @@ export default function CenterDetailScreen() {
             <View style={styles.section}>
               <AppText style={styles.sectionTitle}>{t('center.name')}</AppText>
               <AppText style={styles.centerName}>
-                {isRTL ? center?.centerNameAr : center?.centerNameEn}
+                {isRTL ? center?.nameAr : center?.nameEn}
               </AppText>
             </View>
 
@@ -163,7 +162,7 @@ export default function CenterDetailScreen() {
             {/* Description */}
             <View style={styles.section}>
               <AppText style={styles.sectionTitle}>{t('center.about')}</AppText>
-              <AppText style={styles.description}>{center?.description}</AppText>
+              <AppText style={styles.description}>{isRTL ? center?.descriptionAr : center?.descriptionEn}</AppText>
             </View>
 
             {/* Contact */}
@@ -173,7 +172,7 @@ export default function CenterDetailScreen() {
                 <Ionicons name="business" size={20} color="#757575" />
                 <AppText style={styles.infoLabel}>{t('center.details')}</AppText>
                 <AppText style={styles.infoValue}>
-                  {isRTL ? center?.centerNameAr : center?.centerNameEn}
+                  {isRTL ? center?.nameAr : center?.nameEn}
                 </AppText>
               </View>
               <TouchableOpacity
@@ -220,7 +219,15 @@ export default function CenterDetailScreen() {
                 <AppText style={styles.actionText}>{t('center.bookNow')}</AppText>
               </TouchableOpacity>
             </View>
-          </>
+           </>
+         )}
+
+        {/* Trust Badges */}
+        {badges && badges.length > 0 && (
+          <View style={styles.section}>
+            <AppText style={styles.sectionTitle}>{t('center.trustBadges')}</AppText>
+            <TrustBadgeList badges={badges} isRTL={isRTL} />
+          </View>
         )}
 
         {/* Reviews */}
@@ -398,6 +405,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
   },
   infoLabel: {
     fontSize: 14,

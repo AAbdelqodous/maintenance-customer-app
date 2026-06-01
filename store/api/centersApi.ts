@@ -16,6 +16,7 @@ export interface Address {
 
 export interface ServiceCategory {
   id: number;
+  code?: string;
   nameAr: string;
   nameEn: string;
   descriptionAr?: string;
@@ -33,10 +34,10 @@ export interface MaintenanceCenter {
   phone: string;
   email?: string;
   website?: string;
-  averageRating: number;
-  reviewCount: number;
+  rating: number;
+  totalReviews: number;
   isVerified: boolean;
-  isOpen: boolean;
+  isActive: boolean;
   openingHours?: string;
   latitude?: number;
   longitude?: number;
@@ -71,10 +72,28 @@ export interface CentersResponse {
   last: boolean;
 }
 
+export enum TrustBadgeType {
+  VERIFIED_BUSINESS = 'VERIFIED_BUSINESS',
+  YEARS_EXPERIENCE = 'YEARS_EXPERIENCE',
+  CERTIFIED_TECHNICIANS = 'CERTIFIED_TECHNICIANS',
+  SATISFACTION_GUARANTEE = 'SATISFACTION_GUARANTEE',
+  LICENSED = 'LICENSED',
+}
+
+export interface TrustBadge {
+  badgeType: TrustBadgeType;
+  labelAr: string;
+  labelEn: string;
+  iconName: string;
+  awardedAt: string;
+  metadata?: Record<string, string>;
+}
+
 // ── API slice ───────────────────────────────────────────────────────────────────
 
 export const centersApi = createApi({
   reducerPath: 'centersApi',
+  tagTypes: ['Centers', 'Center', 'Badges'],
   baseQuery: fetchBaseQuery({
     baseUrl: API_BASE_URL,
     prepareHeaders: (headers, { getState }) => {
@@ -107,6 +126,11 @@ export const centersApi = createApi({
         params: { ...params, search: query },
       }),
     }),
+
+    getCenterBadges: builder.query<TrustBadge[], number>({
+      query: (centerId) => `centers/${centerId}/badges`,
+      providesTags: (result, error, centerId) => [{ type: 'Badges' as const, id: centerId }],
+    }),
   }),
 });
 
@@ -115,4 +139,5 @@ export const {
   useGetCenterByIdQuery,
   useGetCategoriesQuery,
   useLazySearchCentersQuery,
+  useGetCenterBadgesQuery,
 } = centersApi;

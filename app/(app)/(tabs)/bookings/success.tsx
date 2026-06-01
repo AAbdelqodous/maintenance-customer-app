@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
+import { formatKD } from '../../../../lib/money';
 
 export default function BookingSuccessScreen() {
   const { t, i18n } = useTranslation();
@@ -13,6 +14,7 @@ export default function BookingSuccessScreen() {
 
   const bookingNumber = params.bookingNumber as string;
   const centerName = params.centerName as string;
+  const depositAmount = params.depositAmount ? Number(params.depositAmount) : 0;
 
 
   const handleViewBooking = () => {
@@ -50,6 +52,18 @@ export default function BookingSuccessScreen() {
           <AppText style={styles.bookingNumberLabel}>{t('booking.bookingNumber')}</AppText>
           <AppText style={styles.bookingNumberValue}>{bookingNumber}</AppText>
         </View>
+
+        {depositAmount > 0 && (
+          <View style={styles.depositCard}>
+            <Ionicons name="shield-checkmark-outline" size={22} color="#7B1FA2" />
+            <View style={styles.depositTextWrap}>
+              <AppText style={styles.depositTitle}>
+                {t('booking.depositRequired')} · {formatKD(depositAmount, i18n.dir() === 'rtl' ? 'ar' : 'en')}
+              </AppText>
+              <AppText style={styles.depositNote}>{t('booking.depositNote')}</AppText>
+            </View>
+          </View>
+        )}
 
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
@@ -167,6 +181,28 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#1A1A2E',
+  },
+  depositCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#F5EEF8',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  depositTextWrap: {
+    flex: 1,
+  },
+  depositTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#7B1FA2',
+  },
+  depositNote: {
+    fontSize: 12,
+    color: '#9575CD',
+    marginTop: 2,
   },
   infoContainer: {
     marginBottom: 32,

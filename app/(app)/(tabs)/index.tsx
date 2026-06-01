@@ -78,6 +78,28 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Get Quotes (reverse marketplace) */}
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.getQuotesCard}
+          onPress={() => router.push('/(app)/quote-requests/new')}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('quoteRequests.getQuotes')}
+        >
+          <View style={styles.getQuotesIcon}>
+            <Ionicons name="pricetags" size={24} color="#fff" />
+          </View>
+          <View style={styles.getQuotesTextWrap}>
+            <AppText style={styles.getQuotesTitle}>{t('quoteRequests.getQuotes')}</AppText>
+            <AppText style={styles.getQuotesSubtitle} numberOfLines={2}>
+              {t('quoteRequests.getQuotesSubtitle')}
+            </AppText>
+          </View>
+          <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
       {/* Categories */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -222,6 +244,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2196F3',
     fontWeight: '500',
+  },
+  getQuotesCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2196F3',
+    borderRadius: 16,
+    padding: 16,
+    gap: 14,
+  },
+  getQuotesIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  getQuotesTextWrap: {
+    flex: 1,
+  },
+  getQuotesTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  getQuotesSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
   },
   categoriesContainer: {
     paddingVertical: 4,

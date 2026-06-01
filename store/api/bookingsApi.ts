@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '../../lib/constants/config';
 import { RootState } from '../index';
+import type { FulfillmentMode, PickupWindow, ServiceAddress } from '../../types/fulfillment';
 
 // ── Types ───────────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ export enum BookingStatus {
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
   REJECTED = 'REJECTED',
+  QUOTE_READY = 'QUOTE_READY',
 }
 
 export enum ServiceType {
@@ -41,6 +43,19 @@ export enum CancelledBy {
   SYSTEM = 'SYSTEM',
 }
 
+export interface BookingCategoryRef {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+}
+
+export interface BookingServiceRef {
+  id: number;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+}
+
 export interface Booking {
   id: number;
   bookingNumber?: string;
@@ -49,14 +64,27 @@ export interface Booking {
   centerNameAr: string;
   centerNameEn: string;
   serviceType: ServiceType;
+  category?: BookingCategoryRef | null;
+  service?: BookingServiceRef | null;
+  /** Spec 009 — set when this booking was created by accepting a quote request. */
+  originRequestId?: number;
   serviceDescription?: string;
   bookingDate: string;
   bookingTime: string;
   bookingStatus: BookingStatus;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** Spec 007 — amount captured in-app (KD), when paid via the payments flow. */
+  paidAmount?: number;
   estimatedCost?: number;
   finalCost?: number;
+  /** Spec 023 — deposit the center required, snapshotted at creation (KD). Absent/0 = none. */
+  depositAmount?: number;
+  /** Spec 008 — how the service is fulfilled, the address/window, and the fee (KD). */
+  fulfillmentMode?: FulfillmentMode;
+  serviceAddress?: ServiceAddress;
+  pickupWindow?: PickupWindow;
+  fulfillmentFee?: number;
   specialInstructions?: string;
   cancelledBy?: CancelledBy;
   cancelledReason?: string;
@@ -66,13 +94,19 @@ export interface Booking {
 
 export interface CreateBookingRequest {
   centerId: number;
-  serviceType: ServiceType;
+  categoryId: number;
+  serviceId: number;
   serviceDescription?: string;
   bookingDate: string;
   bookingTime: string;
   paymentMethod: PaymentMethod;
   customerPhone: string;
   specialInstructions?: string;
+  /** Spec 008 — fulfillment choice (defaults DROP_OFF; address/window required for non-drop-off). */
+  fulfillmentMode?: FulfillmentMode;
+  serviceAddressId?: number;
+  serviceAddress?: ServiceAddress;
+  pickupWindow?: PickupWindow;
 }
 
 export interface UpdateBookingRequest {
@@ -173,3 +207,14 @@ export const {
   useUpdateBookingMutation,
   useCancelBookingMutation,
 } = bookingsApi;
+
+export function getBookingServiceLabel(
+  booking: Pick<Booking, 'service' | 'serviceType'>,
+  t: (key: string) => string,
+  isAr: boolean
+): string {
+  if (booking.service) {
+    return isAr ? booking.service.nameAr : booking.service.nameEn;
+  }
+  return t(`booking.serviceType.${booking.serviceType.toLowerCase()}`);
+}

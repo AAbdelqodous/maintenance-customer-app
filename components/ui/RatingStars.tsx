@@ -19,8 +19,9 @@ export default function RatingStars({
   reviewCount,
 }: RatingStarsProps) {
   const { t } = useTranslation();
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+  const safeRating = Math.min(5, Math.max(0, Number(rating) || 0));
+  const fullStars = Math.floor(safeRating);
+  const hasHalfStar = safeRating % 1 >= 0.5;
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
   const Star = ({ filled, half }: { filled?: boolean; half?: boolean }) => (

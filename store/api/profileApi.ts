@@ -54,6 +54,7 @@ export interface ChangePasswordRequest {
 
 export const profileApi = createApi({
   reducerPath: 'profileApi',
+  tagTypes: ['Profile'],
   baseQuery: fetchBaseQuery({
     baseUrl: API_BASE_URL,
     prepareHeaders: (headers, { getState }) => {
@@ -67,6 +68,7 @@ export const profileApi = createApi({
   endpoints: (builder) => ({
     getMyProfile: builder.query<UserProfile, void>({
       query: () => '/users/me',
+      providesTags: ['Profile'],
     }),
 
     updateProfile: builder.mutation<UserProfile, UpdateProfileRequest>({
@@ -75,6 +77,7 @@ export const profileApi = createApi({
         method: 'PATCH',
         body,
       }),
+      invalidatesTags: ['Profile'],
     }),
 
     uploadProfileImage: builder.mutation<UserProfile, FormData>({
@@ -85,6 +88,7 @@ export const profileApi = createApi({
         // Do NOT set Content-Type header — fetch sets it automatically with boundary for multipart
         formData: true,
       }),
+      invalidatesTags: ['Profile'],
     }),
 
     changePassword: builder.mutation<void, ChangePasswordRequest>({

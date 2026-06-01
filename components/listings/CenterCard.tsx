@@ -41,7 +41,7 @@ export default function CenterCard({ center, isFavorite, onFavoriteToggle }: Cen
           />
         ) : (
           <View style={[styles.image, styles.placeholder]}>
-            <AppText style={styles.placeholderText}>{name.charAt(0)}</AppText>
+            <AppText style={styles.placeholderText}>{name?.charAt(0) ?? '?'}</AppText>
           </View>
         )}
         {center.isVerified && (
@@ -72,7 +72,7 @@ export default function CenterCard({ center, isFavorite, onFavoriteToggle }: Cen
           </AppText>
         )}
         <View style={styles.infoRow}>
-          <RatingStars rating={center.averageRating} size={14} showCount reviewCount={center.reviewCount} />
+          <RatingStars rating={center.rating} size={14} showCount reviewCount={center.totalReviews} />
         </View>
         <View style={styles.infoRow}>
           <AppText style={styles.location}>
@@ -82,21 +82,21 @@ export default function CenterCard({ center, isFavorite, onFavoriteToggle }: Cen
             <AppText style={styles.distance}>{center.distance.toFixed(1)} km</AppText>
           )}
         </View>
-        {center.isOpen !== undefined && (
+        {center.isActive !== undefined && (
           <View style={styles.statusRow}>
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: center.isOpen ? '#4CAF50' : '#F44336' },
+                { backgroundColor: center.isActive ? '#4CAF50' : '#F44336' },
               ]}
             />
             <AppText
               style={[
                 styles.statusText,
-                { color: center.isOpen ? '#4CAF50' : '#F44336' },
+                { color: center.isActive ? '#4CAF50' : '#F44336' },
               ]}
             >
-              {center.isOpen ? t('center.open') : t('center.closed')}
+              {center.isActive ? t('center.open') : t('center.closed')}
             </AppText>
           </View>
         )}
