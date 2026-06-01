@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 import { authApi } from './api/authApi';
+import { centerServicesApi } from './api/centerServicesApi';
 import { bookingsApi } from './api/bookingsApi';
 import { centersApi } from './api/centersApi';
 import { chatApi } from './api/chatApi';
@@ -42,6 +43,7 @@ export const store = configureStore({
     notifications: notificationsReducer,
     chat: chatReducer,
     [authApi.reducerPath]: authApi.reducer,
+    [centerServicesApi.reducerPath]: centerServicesApi.reducer,
     [centersApi.reducerPath]: centersApi.reducer,
     [bookingsApi.reducerPath]: bookingsApi.reducer,
     [reviewsApi.reducerPath]: reviewsApi.reducer,
@@ -62,6 +64,7 @@ export const store = configureStore({
     getDefaultMiddleware().concat(
       unauthorizedMiddleware,
       authApi.middleware,
+      centerServicesApi.middleware,
       centersApi.middleware,
       bookingsApi.middleware,
       reviewsApi.middleware,

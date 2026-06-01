@@ -42,6 +42,19 @@ export enum CancelledBy {
   SYSTEM = 'SYSTEM',
 }
 
+export interface BookingCategoryRef {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+}
+
+export interface BookingServiceRef {
+  id: number;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+}
+
 export interface Booking {
   id: number;
   bookingNumber?: string;
@@ -50,6 +63,8 @@ export interface Booking {
   centerNameAr: string;
   centerNameEn: string;
   serviceType: ServiceType;
+  category?: BookingCategoryRef | null;
+  service?: BookingServiceRef | null;
   serviceDescription?: string;
   bookingDate: string;
   bookingTime: string;
@@ -67,7 +82,8 @@ export interface Booking {
 
 export interface CreateBookingRequest {
   centerId: number;
-  serviceType: ServiceType;
+  categoryId: number;
+  serviceId: number;
   serviceDescription?: string;
   bookingDate: string;
   bookingTime: string;
@@ -174,3 +190,14 @@ export const {
   useUpdateBookingMutation,
   useCancelBookingMutation,
 } = bookingsApi;
+
+export function getBookingServiceLabel(
+  booking: Pick<Booking, 'service' | 'serviceType'>,
+  t: (key: string) => string,
+  isAr: boolean
+): string {
+  if (booking.service) {
+    return isAr ? booking.service.nameAr : booking.service.nameEn;
+  }
+  return t(`booking.serviceType.${booking.serviceType.toLowerCase()}`);
+}

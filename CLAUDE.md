@@ -280,3 +280,112 @@ Show full file path + summary of changes. Wait for confirmation.
 - `service-center` — Spring Boot backend
 - `maintenance-center-app` — React Native center-owner app
 - `maintenance-customer-app` — React Native customer app (this repo)
+
+
+
+# Phase 3.6 — Category → Service Booking Flow
+
+> **Append to `maintenance-customer-app/CLAUDE.md`. Pairs with the backend's
+> Phase 3.6 migration. Detailed UX requirements and tasks live in the Spec Kit
+> spec at `specs/3.6-category-service-booking/` — this section is the pointer,
+> not the source of truth.**
+
+---
+
+## 🎯 Goal
+
+Update the booking flow to match the new backend hierarchy:
+**center → categories → services → booking form**.
+
+Currently the booking form's Step 1 ("Select Service") is hardcoded with a small
+list (Engine Repair / Oil Change / Brake Service / Other). After this phase:
+
+- A new **Category Select** screen sits between Center Detail and the booking form.
+- Booking form Step 1 fetches services from
+  `GET /centers/{id}/categories/{catId}/services` instead of using a static list.
+- Bookings list and detail screens display the category + service name pair
+  instead of the legacy `serviceType` enum.
+
+---
+
+## 📐 Design Decisions (locked — see backend Phase 3.6 for full rationale)
+
+1. Service catalog is **global** (admin-curated) — clients consume it read-only
+2. Customer drill-down is two levels: category, then service
+3. Old `serviceType` enum is being deprecated — new bookings must send
+   `categoryId` + `serviceId`
+4. Old bookings may have null category/service during the transition window —
+   list and detail screens must handle that gracefully
+5. Generic 7-service catalog (REPAIR, MAINTENANCE, INSTALLATION, WARRANTY,
+   INSPECTION, BUYING, SELLING) — the booking form's existing "Describe issue"
+   step still collects specifics
+
+---
+
+## 📂 Files (high-level — see Spec Kit `plan.md` for details)
+
+```
+app/(app)/centers/[id]/
+├── book/
+│   ├── category.tsx              # NEW — CategorySelectScreen
+│   └── (existing booking form)   # MODIFIED — Step 1 now data-driven
+└── index.tsx                      # MODIFIED — "Book" CTA navigates to /book/category
+
+app/(app)/bookings/
+├── index.tsx                      # MODIFIED — show category + service instead of enum
+└── [id].tsx                       # MODIFIED — same
+
+store/api/
+└── centerServicesApi.ts           # NEW — RTK Query endpoints
+```
+
+Existing booking-related Redux state and form logic stay; only Step 1's data
+source and the navigation entry change.
+
+---
+
+## 🚧 Migration Behavior During Rollout
+
+While the backend has both old (`serviceType`) and new (`service_id` + `category_id`)
+fields populated:
+- New bookings created via this app **always** send the new fields
+- Bookings list/detail rendering: prefer the new fields when present, fall back
+  to the deprecated `serviceType` for legacy rows
+- A small "Legacy booking" tag appears on rows that only have the old enum
+  (helpful during QA, removable post-cleanup)
+
+---
+
+## 🚀 Phase Tracker — Append
+
+```
+### Phase 3.6 — Category → Service Booking Flow ⏳ Pending
+- [ ] Spec Kit: /specify (use the prompt in PHASE_3.6_SPECKIT_PROMPT.md)
+- [ ] Spec Kit: /clarify, /plan, /tasks
+- [ ] centerServicesApi.ts (RTK Query)
+- [ ] CategorySelectScreen (app/(app)/centers/[id]/book/category.tsx)
+- [ ] Booking form Step 1 — replace static list with API-driven service list
+- [ ] BookingRequest payload — send categoryId + serviceId
+- [ ] Bookings list — render category + service, fallback to enum for legacy
+- [ ] Booking detail — same
+- [ ] i18n keys (en + ar) for new screen + legacy tag
+- [ ] RTL spot-check on the new screen
+- [ ] Smoke test: pick category → pick service → describe → confirm → see in list
+```
+
+---
+
+## 📍 Spec Location
+
+Once Spec Kit is run:
+
+```
+maintenance-customer-app/specs/3.6-category-service-booking/
+├── spec.md          # output of /specify
+├── clarification.md # output of /clarify (resolved questions only)
+├── plan.md          # output of /plan
+└── tasks.md         # output of /tasks
+```
+
+The spec is the source of truth for UX, accessibility, edge cases, and per-task
+acceptance criteria. This CLAUDE.md section just reflects the high-level outcome.

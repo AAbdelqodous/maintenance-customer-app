@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
 import QuoteCard from '../../../../components/bookings/QuoteCard';
-import { BookingStatus, PaymentMethod, ServiceType, useCancelBookingMutation, useGetBookingByIdQuery } from '../../../../store/api/bookingsApi';
+import { BookingStatus, PaymentMethod, getBookingServiceLabel, useCancelBookingMutation, useGetBookingByIdQuery } from '../../../../store/api/bookingsApi';
 import { useCreateConversationMutation } from '../../../../store/api/chatApi';
+import { useGetCustomerMediaQuery, useUploadCustomerMediaMutation } from '../../../../store/api/mediaApi';
 import { useGetBookingQuoteQuery } from '../../../../store/api/quoteApi';
 
 export default function BookingDetailScreen() {
@@ -23,8 +25,32 @@ export default function BookingDetailScreen() {
   });
   const [cancelBooking] = useCancelBookingMutation();
   const [createConversation] = useCreateConversationMutation();
+  const [uploadCustomerMedia, { isLoading: isUploading }] = useUploadCustomerMediaMutation();
+  const { data: problemPhotos } = useGetCustomerMediaQuery(bookingId, { skip: !bookingId });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  const canUploadPhotos = booking &&
+    (booking.bookingStatus === BookingStatus.PENDING ||
+     booking.bookingStatus === BookingStatus.CONFIRMED ||
+     booking.bookingStatus === BookingStatus.IN_PROGRESS);
+
+  const handleUploadProblemPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsMultipleSelection: false,
+    });
+
+    if (result.canceled || !result.assets?.length) return;
+
+    const asset = result.assets[0];
+    try {
+      await uploadCustomerMedia({ bookingId, asset }).unwrap();
+    } catch {
+      Alert.alert(t('common.error'), t('common.retry'));
+    }
+  };
 
   const handleCancelBooking = async () => {
     if (!cancelReason.trim()) {
@@ -90,18 +116,6 @@ export default function BookingDetailScreen() {
         return '#FF6F00';
       default:
         return '#757575';
-    }
-  };
-
-  const getServiceTypeLabel = (type: ServiceType) => {
-    switch (type) {
-      case ServiceType.CAR: return t('booking.serviceType.car');
-      case ServiceType.ELECTRONICS: return t('booking.serviceType.electronics');
-      case ServiceType.HOME_APPLIANCE: return t('booking.serviceType.home_appliance');
-      case ServiceType.EMERGENCY: return t('booking.serviceType.emergency');
-      case ServiceType.INSTALLATION: return t('booking.serviceType.installation');
-      case ServiceType.REPAIR: return t('booking.serviceType.repair');
-      default: return type;
     }
   };
 
@@ -176,10 +190,25 @@ export default function BookingDetailScreen() {
         <View style={styles.section}>
           <AppText style={styles.sectionTitle}>{t('booking.service')}</AppText>
           <View style={styles.infoCard}>
+            {booking.category && (
+              <>
+                <View style={styles.infoRow}>
+                  <Ionicons name="grid-outline" size={20} color="#2196F3" />
+                  <AppText style={styles.infoLabel}>{t('booking.categoryLabel')}</AppText>
+                  <AppText style={styles.infoValue}>
+                    {i18n.language === 'ar' ? booking.category.nameAr : booking.category.nameEn}
+                  </AppText>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             <View style={styles.infoRow}>
               <Ionicons name="build-outline" size={20} color="#2196F3" />
-              <AppText style={styles.infoLabel}>{t('booking.serviceTypeLabel')}</AppText>
-              <AppText style={styles.infoValue}>{getServiceTypeLabel(booking.serviceType)}</AppText>
+              <AppText style={styles.infoLabel}>{t('booking.serviceLabel')}</AppText>
+              <AppText style={styles.infoValue}>
+                {getBookingServiceLabel(booking, t, i18n.language === 'ar')}
+                {!booking.service ? ` (${t('booking.legacy.tag')})` : ''}
+              </AppText>
             </View>
             <View style={styles.divider} />
             <View style={styles.infoRow}>
@@ -202,6 +231,36 @@ export default function BookingDetailScreen() {
             <AppText style={styles.sectionTitle}>{t('booking.description')}</AppText>
             <View style={styles.descriptionCard}>
               <AppText style={styles.description}>{booking.serviceDescription}</AppText>
+            </View>
+          </View>
+        )}
+
+        {/* Problem Photos */}
+        {canUploadPhotos && (
+          <View style={styles.section}>
+            <AppText style={styles.sectionTitle}>{t('booking.problemPhotos')}</AppText>
+            <View style={styles.photosCard}>
+              {problemPhotos && problemPhotos.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosRow}>
+                  {problemPhotos.map((photo) => (
+                    <Image key={photo.id} source={{ uri: photo.url }} style={styles.photoThumb} />
+                  ))}
+                </ScrollView>
+              )}
+              <TouchableOpacity
+                style={styles.addPhotoButton}
+                onPress={handleUploadProblemPhoto}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#2196F3" />
+                ) : (
+                  <>
+                    <Ionicons name="camera-outline" size={20} color="#2196F3" />
+                    <AppText style={styles.addPhotoText}>{t('booking.addProblemPhoto')}</AppText>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -585,6 +644,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     color: '#1A1A2E',
+  },
+  photosCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    gap: 12,
+  },
+  photosRow: {
+    flexDirection: 'row',
+  },
+  photoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  addPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#2196F3',
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  addPhotoText: {
+    color: '#2196F3',
+    fontSize: 14,
+    fontWeight: '500',
   },
   actions: {
     flexDirection: 'column',

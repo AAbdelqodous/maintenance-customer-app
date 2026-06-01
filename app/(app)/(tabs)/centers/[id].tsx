@@ -24,7 +24,7 @@ export default function CenterDetailScreen() {
   const centerId = Number(params.id);
 
   const { data: center, isLoading: centerLoading } = useGetCenterByIdQuery(centerId);
-  const { data: badges } = useGetCenterBadgesQuery(centerId);
+  const { data: badges } = useGetCenterBadgesQuery(centerId, { skip: true });
   const { data: reviewsData } = useGetCenterReviewsQuery({ centerId, page: 0, size: 10 });
 
   const { data: isFavoriteData, refetch: refetchIsFavorite } = useIsFavoriteQuery(centerId);
@@ -81,10 +81,7 @@ export default function CenterDetailScreen() {
   };
 
   const handleBookNow = () => {
-    router.push({
-      pathname: '/(app)/(tabs)/bookings/new',
-      params: { centerId: String(centerId) },
-    });
+    router.push(`/(app)/(tabs)/centers/${centerId}/book/category`);
   };
 
   const handleWriteReview = () => setShowReviewModal(true);

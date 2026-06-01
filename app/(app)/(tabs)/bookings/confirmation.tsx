@@ -5,12 +5,17 @@ import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
-import { PaymentMethod, ServiceType, useCreateBookingMutation } from '../../../../store/api/bookingsApi';
+import { PaymentMethod, useCreateBookingMutation } from '../../../../store/api/bookingsApi';
 import { useGetCenterByIdQuery } from '../../../../store/api/centersApi';
 
 interface BookingSummary {
   centerId: number;
-  serviceType: ServiceType;
+  categoryId: number;
+  serviceId: number;
+  categoryNameEn: string;
+  categoryNameAr: string;
+  serviceNameEn: string;
+  serviceNameAr: string;
   bookingDate: string;
   bookingTime: string;
   paymentMethod: PaymentMethod;
@@ -27,26 +32,22 @@ export default function BookingConfirmationScreen() {
 
   const bookingData: BookingSummary = {
     centerId: Number(params.centerId),
-    serviceType: params.serviceType as ServiceType,
+    categoryId: Number(params.categoryId),
+    serviceId: Number(params.serviceId),
+    categoryNameEn: params.categoryNameEn as string ?? '',
+    categoryNameAr: params.categoryNameAr as string ?? '',
+    serviceNameEn: params.serviceNameEn as string ?? '',
+    serviceNameAr: params.serviceNameAr as string ?? '',
     bookingDate: params.bookingDate as string,
     bookingTime: params.bookingTime as string,
     paymentMethod: params.paymentMethod as PaymentMethod,
     customerPhone: params.customerPhone as string,
-    serviceDescription: params.serviceDescription as string || undefined,
-    specialInstructions: params.specialInstructions as string || undefined,
+    serviceDescription: (params.serviceDescription as string) || undefined,
+    specialInstructions: (params.specialInstructions as string) || undefined,
   };
 
   const { data: center } = useGetCenterByIdQuery(bookingData.centerId);
   const [createBooking, { isLoading: creating }] = useCreateBookingMutation();
-
-  const serviceTypes: Record<ServiceType, string> = {
-    [ServiceType.CAR]: t('booking.serviceType.car'),
-    [ServiceType.ELECTRONICS]: t('booking.serviceType.electronics'),
-    [ServiceType.HOME_APPLIANCE]: t('booking.serviceType.home_appliance'),
-    [ServiceType.EMERGENCY]: t('booking.serviceType.emergency'),
-    [ServiceType.INSTALLATION]: t('booking.serviceType.installation'),
-    [ServiceType.REPAIR]: t('booking.serviceType.repair'),
-  };
 
   const paymentMethods: Record<PaymentMethod, string> = {
     [PaymentMethod.CASH]: t('booking.paymentMethod.cash'),
@@ -62,8 +63,9 @@ export default function BookingConfirmationScreen() {
     try {
       const result = await createBooking({
         centerId: bookingData.centerId,
-        serviceType: bookingData.serviceType,
-        serviceDescription: bookingData.serviceDescription || serviceTypes[bookingData.serviceType],
+        categoryId: bookingData.categoryId,
+        serviceId: bookingData.serviceId,
+        serviceDescription: bookingData.serviceDescription,
         bookingDate: bookingData.bookingDate,
         bookingTime: bookingData.bookingTime,
         paymentMethod: bookingData.paymentMethod,
@@ -113,8 +115,10 @@ export default function BookingConfirmationScreen() {
               <Ionicons name="settings" size={28} color="#FF9800" />
             </View>
             <View style={styles.cardHeaderContent}>
-              <AppText style={styles.cardTitle}>{t('booking.serviceTypeLabel')}</AppText>
-              <AppText style={styles.cardValue}>{serviceTypes[bookingData.serviceType]}</AppText>
+              <AppText style={styles.cardTitle}>{t('booking.serviceLabel')}</AppText>
+              <AppText style={styles.cardValue}>
+                {isRTL ? bookingData.serviceNameAr : bookingData.serviceNameEn}
+              </AppText>
             </View>
           </View>
           {bookingData.serviceDescription && (

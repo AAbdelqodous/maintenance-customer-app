@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Booking, BookingStatus, ServiceType } from '../../store/api/bookingsApi';
+import { Booking, BookingStatus, getBookingServiceLabel } from '../../store/api/bookingsApi';
 import { AppText } from '../ui/AppText';
 
 interface BookingCardProps {
@@ -14,7 +14,9 @@ export default function BookingCard({ booking }: BookingCardProps) {
   const router = useRouter();
   const isRTL = i18n.dir() === 'rtl';
 
-  const centerName = booking.centerName;
+  const centerName = isRTL ? booking.centerNameAr : booking.centerNameEn;
+  const serviceLabel = getBookingServiceLabel(booking, t, isRTL);
+  const isLegacy = !booking.service;
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
@@ -32,20 +34,6 @@ export default function BookingCard({ booking }: BookingCardProps) {
         return '#F44336';
       default:
         return '#757575';
-    }
-  };
-
-  const getServiceTypeLabel = (type: ServiceType) => {
-    switch (type) {
-      case ServiceType.REPAIR: return t('booking.serviceType.repair');
-      case ServiceType.MAINTENANCE: return t('booking.serviceType.maintenance');
-      case ServiceType.INSPECTION: return t('booking.serviceType.inspection');
-      case ServiceType.INSTALLATION: return t('booking.serviceType.installation');
-      case ServiceType.CONSULTATION: return t('booking.serviceType.consultation');
-      case ServiceType.EMERGENCY: return t('booking.serviceType.emergency');
-      case ServiceType.WARRANTY: return t('booking.serviceType.warranty');
-      case ServiceType.OTHER: return t('booking.serviceType.other');
-      default: return type;
     }
   };
 
@@ -69,9 +57,14 @@ export default function BookingCard({ booking }: BookingCardProps) {
           <AppText style={styles.centerName} numberOfLines={1}>
             {centerName}
           </AppText>
-          <AppText style={styles.serviceType}>
-            {getServiceTypeLabel(booking.serviceType)}
-          </AppText>
+          <View style={styles.serviceLabelRow}>
+            <AppText style={styles.serviceType}>{serviceLabel}</AppText>
+            {isLegacy && (
+              <View style={styles.legacyBadge}>
+                <AppText style={styles.legacyBadgeText}>{t('booking.legacy.tag')}</AppText>
+              </View>
+            )}
+          </View>
         </View>
         <View
           style={[
@@ -151,6 +144,25 @@ const styles = StyleSheet.create({
   serviceType: {
     fontSize: 13,
     color: '#757575',
+  },
+  serviceLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  legacyBadge: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+  },
+  legacyBadgeText: {
+    fontSize: 10,
+    color: '#757575',
+    fontStyle: 'italic',
   },
   statusBadge: {
     paddingHorizontal: 12,

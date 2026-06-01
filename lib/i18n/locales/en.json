@@ -40,6 +40,8 @@
     "otp": {
       "title": "Verify Your Email",
       "subtitle": "We sent a 6-digit code to {{email}}",
+      "resetTitle": "Enter Reset Code",
+      "resetSubtitle": "We sent a 6-digit reset code to {{email}}",
       "submitButton": "Verify",
       "resendCode": "Resend Code",
       "newCodeSent": "A new verification code has been sent to your email.",
@@ -56,6 +58,25 @@
       "forgotPassword": "Forgot Password?",
       "noAccount": "Don't have an account?",
       "registerLink": "Create Account"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email and we'll send you a reset code.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "submitButton": "Send Reset Code",
+      "codeSent": "A reset code has been sent to your email."
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "subtitle": "Enter the code from your email and your new password.",
+      "passwordLabel": "New Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmLabel": "Confirm New Password",
+      "confirmPlaceholder": "Re-enter your new password",
+      "submitButton": "Reset Password",
+      "passwordMismatch": "Passwords do not match",
+      "success": "Password reset successfully! Please sign in."
     }
   },
   "home": {
@@ -177,6 +198,10 @@
     "bookYourFirstService": "Book your first service now!",
     "selectCenterFirst": "Please select a center first to make a booking.",
     "browseCenters": "Browse Centers",
+    "noServicesTitle": "No Services Available",
+    "noServicesMessage": "This center does not currently offer any bookable services. Try one of our top-rated centers below.",
+    "recommendedCenters": "Highly Recommended Centers",
+    "bookWithCenter": "Book Now",
     "serviceType": {
       "car": "Car",
       "electronics": "Electronics",
@@ -264,7 +289,21 @@
       "approved": "Quote Approved",
       "rejected": "Quote Rejected",
       "noItems": "No items"
-    }
+    },
+    "categorySelect": {
+      "title": "Select Category",
+      "empty": "This center has no available services at the moment.",
+      "error": "Could not load categories. Please try again.",
+      "centerUnavailable": "This center is no longer accepting bookings.",
+      "retry": "Try Again",
+      "back": "Go Back"
+    },
+    "legacy": {
+      "tag": "Legacy",
+      "fallbackLabel": "Service"
+    },
+    "categoryLabel": "Category",
+    "serviceLabel": "Service"
   },
   "review": {
     "title": "Write a Review",

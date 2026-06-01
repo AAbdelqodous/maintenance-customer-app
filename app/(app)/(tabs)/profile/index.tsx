@@ -3,7 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppButton } from '../../../../components/ui/AppButton';
 import { AppText } from '../../../../components/ui/AppText';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -149,6 +149,10 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('profile.logoutConfirm'))) logout();
+      return;
+    }
     Alert.alert(
       t('profile.logout'),
       t('profile.logoutConfirm'),
@@ -555,9 +559,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   avatarContainer: {
-    marginRight: 16,
-  },
-  avatarContainer: {
     width: 80,
     height: 80,
     alignSelf: 'center',
@@ -579,11 +580,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
   },
   avatarEditBadge: {
     position: 'absolute',

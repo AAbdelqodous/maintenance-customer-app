@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import PhotoGrid from '../../../../components/bookings/PhotoGrid';
 import { AppText } from '../../../../components/ui/AppText';
-import { useGetBookingMediaQuery } from '../../../../store/api/mediaApi';
+import { useGetCustomerMediaQuery } from '../../../../store/api/mediaApi';
 
 export default function BookingPhotosScreen() {
   const { t, i18n } = useTranslation();
@@ -12,10 +12,7 @@ export default function BookingPhotosScreen() {
   const isRTL = i18n.dir() === 'rtl';
   const bookingId = Number(params.id);
 
-  const { data, isLoading, isError } = useGetBookingMediaQuery(
-    { bookingId },
-    { skip: !bookingId }
-  );
+  const { data, isLoading, isError } = useGetCustomerMediaQuery(bookingId, { skip: !bookingId });
 
   return (
     <>

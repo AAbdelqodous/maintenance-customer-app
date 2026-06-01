@@ -134,6 +134,15 @@ export default function LoginScreen() {
           )}
         />
 
+        <Pressable
+          style={styles.forgotPassword}
+          onPress={() => router.push('/(auth)/forgot-password')}
+        >
+          <AppText style={styles.forgotPasswordText}>
+            {t('auth.login.forgotPassword')}
+          </AppText>
+        </Pressable>
+
         <AuthButton
           title={t('auth.login.submitButton')}
           onPress={handleSubmit(onSubmit)}
@@ -174,6 +183,15 @@ const styles = StyleSheet.create({
   errorBannerText: {
     fontSize: 13,
     color: '#991B1B',
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: '#1A73E8',
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',
